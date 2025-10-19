@@ -1,0 +1,298 @@
+---
+globs: **/di/*.kt,**/*ViewModel.kt,**/*Repository*.kt,**/*UseCase.kt
+description: Dependency injection guidelines using Hilt
+---
+
+# Dependency Injection with Hilt
+
+## Overview
+
+This project uses **Hilt** for dependency injection. All dependencies must be properly injected, never instantiated manually.
+
+Reference DI modules:
+- [NetworkModule.kt](mdc:app/src/main/java/com/example/baseapp/core/di/NetworkModule.kt)
+- [DatabaseModule.kt](mdc:app/src/main/java/com/example/baseapp/core/di/DatabaseModule.kt)
+- [RepositoryModule.kt](mdc:app/src/main/java/com/example/baseapp/core/di/RepositoryModule.kt)
+
+## General Rules
+
+### 1. Never Use Manual Instantiation
+❌ **BAD**:
+```kotlin
+class MyViewModel {
+    private val useCase = MyUseCase()  // DON'T
+    private val repository = MyRepositoryImpl()  // DON'T
+}
+```
+
+✅ **GOOD**:
+```kotlin
+@HiltViewModel
+class MyViewModel @Inject constructor(
+    private val useCase: MyUseCase
+) : ViewModel() {
+    // Dependencies injected via constructor
+}
+```
+
+### 2. Always Use Constructor Injection
+```kotlin
+class MyRepository @Inject constructor(
+    private val remoteDataSource: RemoteDataSource,
+    private val localDataSource: LocalDataSource
+) : Repository {
+    // Implementation
+}
+```
+
+## Hilt Annotations
+
+### Application Class
+```kotlin
+@HiltAndroidApp
+class MyApplication : Application()
+```
+
+### Activities
+```kotlin
+@AndroidEntryPoint
+class MainActivity : ComponentActivity()
+```
+
+### ViewModels
+```kotlin
+@HiltViewModel
+class MyViewModel @Inject constructor(
+    private val useCase: MyUseCase
+) : ViewModel()
+```
+
+### Composables (getting ViewModels)
+```kotlin
+@Composable
+fun MyScreen() {
+    val viewModel = hiltViewModel<MyViewModel>()
+    // Use viewModel
+}
+```
+
+## Module Structure
+
+### 1. Network Module
+```kotlin
+@Module
+@InstallIn(SingletonComponent::class)
+object NetworkModule {
+    
+    @Provides
+    @Singleton
+    fun provideRetrofit(): Retrofit {
+        // Configuration
+    }
+    
+    @Provides
+    @Singleton
+    fun provideApiService(retrofit: Retrofit): ApiService {
+        return retrofit.create(ApiService::class.java)
+    }
+}
+```
+
+### 2. Database Module
+```kotlin
+@Module
+@InstallIn(SingletonComponent::class)
+object DatabaseModule {
+    
+    @Provides
+    @Singleton
+    fun provideDatabase(@ApplicationContext context: Context): AppDatabase {
+        return Room.databaseBuilder(
+            context,
+            AppDatabase::class.java,
+            Constants.DATABASE_NAME
+        ).build()
+    }
+    
+    @Provides
+    fun provideDao(database: AppDatabase): MyDao {
+        return database.myDao()
+    }
+}
+```
+
+### 3. Repository Module
+```kotlin
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class RepositoryModule {
+    
+    @Binds
+    @Singleton
+    abstract fun bindMyRepository(
+        impl: MyRepositoryImpl
+    ): MyRepository
+}
+```
+
+## Scoping
+
+### Singleton Scope
+Use for:
+- Network clients
+- Database instances
+- Shared preferences
+- Repository implementations
+
+```kotlin
+@Provides
+@Singleton
+fun provideApiService(): ApiService
+```
+
+### ViewModel Scope
+Automatically provided for ViewModels:
+```kotlin
+@HiltViewModel
+class MyViewModel @Inject constructor(
+    private val useCase: MyUseCase
+) : ViewModel()
+```
+
+### Activity Scope
+Use when needed:
+```kotlin
+@Provides
+@ActivityScoped
+fun provideActivitySpecificDependency(): Dependency
+```
+
+## Qualifiers
+
+### When You Need Multiple Implementations
+```kotlin
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class IoDispatcher
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class MainDispatcher
+
+@Module
+@InstallIn(SingletonComponent::class)
+object DispatcherModule {
+    
+    @Provides
+    @IoDispatcher
+    fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
+    
+    @Provides
+    @MainDispatcher
+    fun provideMainDispatcher(): CoroutineDispatcher = Dispatchers.Main
+}
+```
+
+Usage:
+```kotlin
+class MyRepository @Inject constructor(
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
+)
+```
+
+## Testing with Hilt
+
+### Test Modules
+```kotlin
+@Module
+@TestInstallIn(
+    components = [SingletonComponent::class],
+    replaces = [NetworkModule::class]
+)
+object TestNetworkModule {
+    @Provides
+    @Singleton
+    fun provideTestApiService(): ApiService {
+        // Return mock implementation
+    }
+}
+```
+
+### Test Setup
+```kotlin
+@HiltAndroidTest
+class MyScreenTest {
+    
+    @get:Rule(order = 0)
+    val hiltRule = HiltAndroidRule(this)
+    
+    @get:Rule(order = 1)
+    val composeTestRule = createAndroidComposeRule<MainActivity>()
+    
+    @Before
+    fun setup() {
+        hiltRule.inject()
+    }
+}
+```
+
+## Common Patterns
+
+### Pattern 1: Use Case Injection
+```kotlin
+class MyUseCase @Inject constructor(
+    private val repository: MyRepository
+) {
+    operator fun invoke(param: String): Flow<Result<Data>> {
+        return repository.getData(param)
+    }
+}
+```
+
+### Pattern 2: Repository Injection
+```kotlin
+class MyRepositoryImpl @Inject constructor(
+    private val remoteDataSource: RemoteDataSource,
+    private val localDataSource: LocalDataSource,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
+) : MyRepository {
+    // Implementation
+}
+```
+
+### Pattern 3: ViewModel Injection
+```kotlin
+@HiltViewModel
+class MyViewModel @Inject constructor(
+    private val getUsersUseCase: GetUsersUseCase,
+    private val refreshUsersUseCase: RefreshUsersUseCase
+) : ViewModel() {
+    // Implementation
+}
+```
+
+## Checklist for New Components
+
+- [ ] Uses `@Inject constructor` for dependencies
+- [ ] No manual instantiation of dependencies
+- [ ] Appropriate Hilt annotation used (`@HiltViewModel`, `@AndroidEntryPoint`)
+- [ ] Dependencies provided in appropriate module
+- [ ] Correct scope applied (`@Singleton`, `@ViewModelScoped`)
+- [ ] Qualifiers used when multiple implementations exist
+- [ ] Test module created if needed for testing
+
+## Common Mistakes to Avoid
+
+❌ **DON'T**:
+- Create instances with `new` or constructors
+- Use service locator pattern
+- Pass dependencies through multiple layers
+- Forget `@AndroidEntryPoint` on Activity
+- Forget `@HiltAndroidApp` on Application
+
+✅ **DO**:
+- Use constructor injection everywhere
+- Define clear dependency graphs
+- Use appropriate scopes
+- Create test modules for testing
+- Follow single responsibility principle

@@ -1,0 +1,29 @@
+{
+    "project_info": {
+        "project_number": "987654321",
+        "project_id": "baseapp-staging",
+        "storage_bucket": "baseapp-staging.appspot.com"
+    },
+    "client": [
+        {
+            "client_info": {
+                "mobilesdk_app_id": "1:987654321:android:fedcba654321",
+                "android_client_info": {
+                    "package_name": "dev.sonle.androidbasearchitechture.staging"
+                }
+            },
+            "oauth_client": [],
+            "api_key": [
+                {
+                    "current_key": "AIzaSyStagingKey987654321"
+                }
+            ],
+            "services": {
+                "appinvite_service": {
+                    "other_platform_oauth_client": []
+                }
+            }
+        }
+    ],
+    "configuration_version": "1"
+}

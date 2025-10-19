@@ -1,0 +1,207 @@
+---
+alwaysApply: false
+description: Comprehensive checklist to verify before creating a pull request
+---
+
+# Pull Request Checklist
+
+## Before Creating a PR
+
+Use this checklist to ensure your code meets all requirements before submitting a pull request.
+
+## ✅ Code Quality
+
+### General
+- [ ] No hardcoded values (strings, dimensions, colors)
+- [ ] All strings in `strings.xml`
+- [ ] All dimensions use `ResponsiveUtils`
+- [ ] All colors use Material Theme
+- [ ] Code follows Kotlin coding conventions
+- [ ] No unused imports
+- [ ] No compiler warnings
+- [ ] No lint errors
+- [ ] Code is properly formatted
+
+### Architecture
+- [ ] Clean Architecture layers respected (Domain ← Data → Presentation)
+- [ ] MVVM pattern followed
+- [ ] Dependency injection used (Hilt)
+- [ ] No direct instantiation of dependencies
+- [ ] Repository pattern implemented correctly
+- [ ] Use cases contain only business logic
+- [ ] ViewModels don't contain UI logic
+
+### State Management
+- [ ] State defined in ViewModel
+- [ ] State is immutable (StateFlow)
+- [ ] State updates use `copy()` or `update()`
+- [ ] No mutable state exposed publicly
+- [ ] Side effects handled properly (LaunchedEffect, etc.)
+
+### Responsive Design
+- [ ] Window size detection implemented
+- [ ] Responsive utilities used for all dimensions
+- [ ] Layouts adapt to screen sizes (Compact, Medium, Expanded)
+- [ ] Navigation adapts to screen size
+- [ ] Preview functions for all screen sizes created
+- [ ] Tested on multiple screen sizes
+- [ ] Landscape orientation tested
+
+## ✅ Testing
+
+### Unit Tests
+- [ ] **All ViewModels have unit tests** (≥90% coverage)
+- [ ] **All Use Cases have unit tests** (100% coverage)
+- [ ] **All Repositories have unit tests** (≥85% coverage)
+- [ ] **All Utilities have unit tests** (100% coverage)
+- [ ] All tests pass locally
+- [ ] Test names are descriptive
+- [ ] Tests cover happy paths
+- [ ] Tests cover error scenarios
+- [ ] Tests cover edge cases
+- [ ] Tests use MockK for mocking
+- [ ] Tests use proper coroutine testing
+
+### UI Tests
+- [ ] **All new screens have UI tests**
+- [ ] **All custom components have UI tests**
+- [ ] All UI tests pass locally
+- [ ] UI tests cover user interactions
+- [ ] UI tests cover navigation
+- [ ] UI tests cover error states
+- [ ] UI tests cover loading states
+- [ ] UI tests use semantic matchers
+- [ ] Hilt integration tests set up correctly
+
+### Test Execution
+- [ ] `./gradlew test` passes
+- [ ] `./gradlew connectedAndroidTest` passes
+- [ ] No test warnings or errors
+- [ ] Code coverage meets minimum thresholds
+- [ ] Test report reviewed
+
+## ✅ Documentation
+
+- [ ] Code has KDoc comments for public APIs
+- [ ] Complex logic is explained with comments
+- [ ] README updated if needed
+- [ ] Architecture documentation updated if needed
+- [ ] New dependencies documented
+- [ ] Breaking changes documented
+
+## ✅ Dependencies
+
+- [ ] No unnecessary dependencies added
+- [ ] Dependencies use version catalog (`libs.versions.toml`)
+- [ ] Dependencies are latest stable versions
+- [ ] Transitive dependencies checked
+- [ ] License compatibility verified
+
+## ✅ Performance
+
+- [ ] No performance regressions
+- [ ] Large lists use `LazyColumn`/`LazyRow`
+- [ ] Images optimized
+- [ ] Memory leaks checked
+- [ ] No blocking operations on main thread
+- [ ] Coroutines used for async operations
+
+## ✅ Security
+
+- [ ] No sensitive data hardcoded
+- [ ] No API keys in code
+- [ ] Input validation implemented
+- [ ] Error messages don't leak sensitive info
+- [ ] ProGuard rules updated if needed
+
+## ✅ Accessibility
+
+- [ ] Content descriptions added for icons
+- [ ] Touch targets ≥ 48dp
+- [ ] Text is readable (contrast, size)
+- [ ] Screen reader tested
+- [ ] Keyboard navigation works
+
+## ✅ Git
+
+- [ ] Commit messages are clear and descriptive
+- [ ] Commits are atomic (one logical change)
+- [ ] Branch name follows convention
+- [ ] No merge conflicts
+- [ ] No debug code committed
+- [ ] No commented-out code
+- [ ] `.gitignore` updated if needed
+
+## ✅ Build
+
+- [ ] Project builds successfully
+- [ ] No build warnings
+- [ ] ProGuard/R8 rules work (if applicable)
+- [ ] APK size is reasonable
+- [ ] Min SDK version respected
+- [ ] Target SDK version correct
+
+## ✅ Code Review Readiness
+
+- [ ] PR title is clear and descriptive
+- [ ] PR description explains what and why
+- [ ] Screenshots/videos added for UI changes
+- [ ] Related issues linked
+- [ ] Breaking changes highlighted
+- [ ] Migration guide provided if needed
+- [ ] Reviewers assigned
+- [ ] Labels added
+
+## ✅ Definition of Done
+
+A feature/bug fix is **ONLY** complete when:
+- ✅ All code quality checks pass
+- ✅ **All unit tests written and passing**
+- ✅ **All UI tests written and passing**
+- ✅ Code coverage meets minimum thresholds
+- ✅ All documentation updated
+- ✅ Code reviewed and approved
+- ✅ No merge conflicts
+- ✅ CI/CD pipeline passes
+
+## Commands to Run Before PR
+
+```bash
+# Format code
+./gradlew ktlintFormat
+
+# Run lint
+./gradlew lint
+
+# Run unit tests
+./gradlew test
+
+# Run instrumented tests
+./gradlew connectedAndroidTest
+
+# Generate test coverage
+./gradlew jacocoTestReport
+
+# Build release APK
+./gradlew assembleRelease
+```
+
+## Common Rejection Reasons
+
+Your PR will be **REJECTED** if:
+- ❌ Tests are missing
+- ❌ Tests are failing
+- ❌ Code coverage is below threshold
+- ❌ Hardcoded values present
+- ❌ Lint errors exist
+- ❌ Build fails
+- ❌ No responsive design implementation
+- ❌ Poor code quality
+- ❌ No documentation
+
+## Notes
+
+- Don't skip any items in this checklist
+- If an item doesn't apply, explain why in PR description
+- When in doubt, ask for clarification
+- Quality over speed - take time to do it right

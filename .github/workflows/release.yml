@@ -1,0 +1,118 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy to"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          java-version: "11"
+          distribution: "temurin"
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Decode Firebase config files
+        run: |
+          echo "${{ secrets.FIREBASE_CONFIG_DEV }}" | base64 -d > app/src/dev/google-services.json
+          echo "${{ secrets.FIREBASE_CONFIG_STAGING }}" | base64 -d > app/src/staging/google-services.json
+          echo "${{ secrets.FIREBASE_CONFIG_PROD }}" | base64 -d > app/src/prod/google-services.json
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Run tests
+        run: ./gradlew test
+
+      - name: Build release APK
+        run: |
+          if [ "${{ github.event.inputs.environment || 'staging' }}" = "production" ]; then
+            ./gradlew assembleProdRelease
+          else
+            ./gradlew assembleStagingRelease
+          fi
+
+      - name: Sign APK
+        if: github.event.inputs.environment == 'production'
+        run: |
+          # Sign APK with release keystore
+          jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore release.keystore -storepass ${{ secrets.KEYSTORE_PASSWORD }} -keypass ${{ secrets.KEY_PASSWORD }} app/build/outputs/apk/prod/release/app-prod-release-unsigned.apk ${{ secrets.KEY_ALIAS }}
+
+      - name: Upload APK to GitHub Releases
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-release-${{ github.event.inputs.environment || 'staging' }}-${{ github.sha }}
+          path: app/build/outputs/apk/*/release/*.apk
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: app/build/outputs/apk/prod/release/app-prod-release.apk
+          asset_name: app-prod-release.apk
+          asset_content_type: application/vnd.android.package-archive
+
+      - name: Deploy to Firebase App Distribution
+        if: github.event.inputs.environment == 'staging'
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_APP_ID_STAGING }}
+          token: ${{ secrets.FIREBASE_TOKEN }}
+          groups: testers
+          file: app/build/outputs/apk/staging/release/app-staging-release.apk
+          releaseNotes: "Staging release - ${{ github.sha }}"
+
+      - name: Deploy to Play Store
+        if: github.event.inputs.environment == 'production'
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: dev.sonle.androidbasearchitechture
+          releaseFiles: app/build/outputs/apk/prod/release/app-prod-release.apk
+          track: production
+          status: completed

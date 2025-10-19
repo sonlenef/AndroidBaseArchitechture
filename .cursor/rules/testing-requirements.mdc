@@ -1,0 +1,265 @@
+---
+alwaysApply: true
+description: Mandatory testing requirements for all code changes
+---
+
+# Testing Requirements
+
+## ⚠️ MANDATORY TESTING POLICY
+
+**ALL CODE CHANGES MUST INCLUDE TESTS**
+
+- Every new feature must have accompanying tests
+- Every bug fix must include a regression test
+- **No task is considered complete until all tests pass**
+- Pull requests without tests will be rejected
+
+## Testing Strategy
+
+### Test Pyramid
+1. **Unit Tests** (70%): Fast, isolated, test individual components
+2. **Integration Tests** (20%): Test component interactions
+3. **UI Tests** (10%): Test user flows and UI
+
+## Unit Testing Requirements
+
+### What to Test
+✅ **Must Have Unit Tests**:
+- ViewModels (all state transitions and business logic)
+- Use Cases (all business logic paths)
+- Repositories (data flow and error handling)
+- Utility functions (all edge cases)
+- Validation functions (all validation rules)
+
+### Unit Test Structure
+```kotlin
+class MyViewModelTest {
+    // 1. Setup
+    private lateinit var viewModel: MyViewModel
+    private lateinit var mockUseCase: MockUseCase
+    
+    @Before
+    fun setup() {
+        // Initialize mocks and subject under test
+    }
+    
+    // 2. Test cases
+    @Test
+    fun `test name in backticks describing scenario`() {
+        // Given (arrange)
+        // When (act)
+        // Then (assert)
+    }
+    
+    @After
+    fun tearDown() {
+        // Clean up if needed
+    }
+}
+```
+
+### Unit Test Naming
+- Use descriptive names with backticks
+- Format: `` `method name should behavior when condition` ``
+- Examples:
+  - `` `login should emit success when credentials are valid` ``
+  - `` `getUserById should return error when user not found` ``
+
+### Required Test Coverage
+- **ViewModels**: ≥ 90% coverage
+  - All state changes
+  - All user actions
+  - All error scenarios
+  - Loading states
+  
+- **Use Cases**: 100% coverage
+  - Happy path
+  - All error paths
+  - Edge cases
+  - Validation failures
+
+- **Repositories**: ≥ 85% coverage
+  - Data flow (local ↔ remote)
+  - Error propagation
+  - Caching logic
+
+- **Utilities**: 100% coverage
+  - All functions
+  - All edge cases
+  - Boundary conditions
+
+### Unit Test Tools
+- **Mocking**: MockK
+- **Coroutines**: `kotlinx-coroutines-test`
+- **Flow Testing**: Turbine
+- **LiveData/StateFlow**: `androidx.arch.core:core-testing`
+
+### Example Unit Test
+```kotlin
+class LoginViewModelTest {
+    @get:Rule
+    val testDispatcherRule = TestDispatcherRule()
+    
+    @get:Rule
+    val instantTaskExecutorRule = InstantTaskExecutorRule()
+    
+    private lateinit var viewModel: LoginViewModel
+    private val loginUseCase = mockk<LoginUseCase>()
+    
+    @Before
+    fun setup() {
+        viewModel = LoginViewModel(loginUseCase)
+    }
+    
+    @Test
+    fun `login should emit success state when credentials are valid`() = runTest {
+        // Given
+        val email = "test@example.com"
+        val password = "password123"
+        coEvery { loginUseCase(email, password) } returns flowOf(
+            NetworkResult.Success(User(id = 1, email = email))
+        )
+        
+        // When
+        viewModel.onEmailChange(email)
+        viewModel.onPasswordChange(password)
+        viewModel.onLoginClick()
+        
+        // Then
+        viewModel.uiState.test {
+            val state = awaitItem()
+            assertTrue(state.isLoginSuccessful)
+            assertFalse(state.isLoading)
+            assertNull(state.error)
+        }
+    }
+}
+```
+
+## UI Testing Requirements
+
+### What to Test
+✅ **Must Have UI Tests**:
+- Screen composition and layout
+- User interactions (clicks, text input)
+- Navigation flows
+- Error state rendering
+- Loading state rendering
+- Custom components behavior
+
+### UI Test Structure
+```kotlin
+@HiltAndroidTest
+class LoginScreenTest {
+    @get:Rule(order = 0)
+    val hiltRule = HiltAndroidRule(this)
+    
+    @get:Rule(order = 1)
+    val composeTestRule = createAndroidComposeRule<MainActivity>()
+    
+    @Before
+    fun setup() {
+        hiltRule.inject()
+    }
+    
+    @Test
+    fun loginScreen_displaysAllUIElements() {
+        // Test UI rendering
+    }
+    
+    @Test
+    fun loginScreen_showsErrorWhenInvalidEmail() {
+        // Test validation
+    }
+}
+```
+
+### UI Test Tools
+- **Compose Test**: `androidx.compose.ui:ui-test-junit4`
+- **Espresso**: For non-Compose views
+- **Hilt Testing**: `com.google.dagger:hilt-android-testing`
+- **MockK**: For mocking dependencies
+
+### UI Test Best Practices
+1. Test user-visible behavior, not implementation
+2. Use semantic matchers (text, content description)
+3. Test accessibility
+4. Test different screen sizes (responsive design)
+5. Test error and loading states
+
+### Example UI Test
+```kotlin
+@Test
+fun loginScreen_performsLogin_whenValidCredentials() {
+    composeTestRule.apply {
+        // Enter email
+        onNodeWithText("Email").performTextInput("test@example.com")
+        
+        // Enter password
+        onNodeWithText("Password").performTextInput("password123")
+        
+        // Click login button
+        onNodeWithText("Login").performClick()
+        
+        // Verify navigation
+        waitUntil(timeoutMillis = 3000) {
+            onAllNodesWithText("User List").fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+}
+```
+
+## Test Execution Requirements
+
+### Before Committing
+```bash
+# Run all unit tests
+./gradlew test
+
+# Run all instrumented tests
+./gradlew connectedAndroidTest
+
+# Generate test coverage report
+./gradlew jacocoTestReport
+```
+
+### Continuous Integration
+- All tests must pass in CI pipeline
+- Minimum code coverage thresholds must be met
+- No warnings or errors in test execution
+
+## Test Documentation
+
+### Test Files Location
+- **Unit Tests**: `app/src/test/java/`
+- **UI Tests**: `app/src/androidTest/java/`
+- **Test Utilities**: `app/src/test/java/.../TestData.kt`, `TestDispatcher.kt`
+
+Reference:
+- [TestData.kt](mdc:app/src/test/java/com/example/baseapp/TestData.kt)
+- [TestDispatcher.kt](mdc:app/src/test/java/com/example/baseapp/TestDispatcher.kt)
+- [TESTING.md](mdc:TESTING.md)
+
+## Failing Tests Policy
+
+### If Tests Fail
+1. **Do NOT ignore or skip failing tests**
+2. **Do NOT commit code with failing tests**
+3. **Fix the test or the code immediately**
+4. **Ask for help if stuck**
+
+### Test Maintenance
+- Update tests when requirements change
+- Refactor tests alongside production code
+- Remove obsolete tests
+- Keep test data up-to-date
+
+## Definition of Done
+
+A task is only complete when:
+- ✅ All unit tests written and passing
+- ✅ All UI tests written and passing
+- ✅ Code coverage meets minimum thresholds
+- ✅ No test warnings or errors
+- ✅ Tests are reviewed and approved
+- ✅ Tests are documented

@@ -1,0 +1,277 @@
+# Firebase Integration Rules
+
+## Overview
+
+This project integrates comprehensive Firebase services including Authentication, Firestore, Cloud Messaging, Analytics, Crashlytics, Remote Config, Storage, and Performance Monitoring.
+
+## Firebase Services
+
+### 1. Firebase Authentication
+- **Location**: `app/src/main/java/com/example/baseapp/data/auth/`
+- **Features**: Email/Password, Google Sign-In, Phone, Anonymous auth
+- **Key Files**: `FirebaseAuthDataSource.kt`, `AuthState.kt`
+- **Usage**: Always handle authentication errors gracefully with user-friendly messages
+
+### 2. Cloud Firestore
+- **Location**: `app/src/main/java/com/example/baseapp/data/firestore/`
+- **Features**: Real-time sync, offline persistence, queries, pagination
+- **Key Files**: `FirestoreDataSource.kt`, `FirestoreUser.kt`
+- **Usage**: Use real-time listeners for data that changes frequently
+
+### 3. Firebase Cloud Messaging (FCM)
+- **Location**: `app/src/main/java/com/example/baseapp/core/fcm/`
+- **Features**: Push notifications, notification channels, token management
+- **Key Files**: `MyFirebaseMessagingService.kt`, `NotificationHelper.kt`
+- **Usage**: Always handle notification actions and deep linking
+
+### 4. Firebase Analytics
+- **Location**: `app/src/main/java/com/example/baseapp/core/analytics/`
+- **Features**: Event tracking, user properties, screen views
+- **Key Files**: `AnalyticsManager.kt`, `AnalyticsEvents.kt`
+- **Usage**: Track user actions and screen views for insights
+
+### 5. Firebase Crashlytics
+- **Location**: `app/src/main/java/com/example/baseapp/core/crashlytics/`
+- **Features**: Crash reporting, non-fatal exceptions, custom logs
+- **Key Files**: `CrashlyticsManager.kt`, `CrashlyticsLogger.kt`
+- **Usage**: Log important events and errors for debugging
+
+### 6. Firebase Remote Config
+- **Location**: `app/src/main/java/com/example/baseapp/core/config/`
+- **Features**: Dynamic configuration, feature flags, A/B testing
+- **Key Files**: `RemoteConfigManager.kt`, `FeatureFlags.kt`
+- **Usage**: Use for feature toggles and dynamic configuration
+
+### 7. Firebase Storage
+- **Location**: `app/src/main/java/com/example/baseapp/data/storage/`
+- **Features**: File upload/download, image compression, progress tracking
+- **Key Files**: `FirebaseStorageDataSource.kt`, `ImageUploader.kt`
+- **Usage**: Compress images before upload, handle upload progress
+
+### 8. Firebase Performance Monitoring
+- **Location**: `app/src/main/java/com/example/baseapp/core/performance/`
+- **Features**: Custom traces, network monitoring, screen rendering
+- **Key Files**: `PerformanceMonitor.kt`, `PerformanceTraces.kt`
+- **Usage**: Trace expensive operations and network requests
+
+## Coding Standards
+
+### 1. Error Handling
+```kotlin
+// Always handle Firebase errors gracefully
+try {
+    val result = firebaseOperation()
+    when (result) {
+        is Success -> // Handle success
+        is Error -> // Handle error with user-friendly message
+    }
+} catch (e: Exception) {
+    crashlyticsManager.recordException(e)
+    analyticsManager.logError("operation_failed", e.message)
+}
+```
+
+### 2. Offline Support
+```kotlin
+// Handle offline scenarios
+firestoreDataSource.getUsers().collect { result ->
+    when (result) {
+        is NetworkResult.Success -> {
+            // Show data
+        }
+        is NetworkResult.Error -> {
+            if (result.message.contains("offline")) {
+                // Show cached data or offline message
+            } else {
+                // Show error message
+            }
+        }
+    }
+}
+```
+
+### 3. Performance Monitoring
+```kotlin
+// Trace expensive operations
+val trace = performanceTraces.traceDataLoading("users", "firestore")
+try {
+    val users = loadUsers()
+    performanceTraces.addMetric(trace, "user_count", users.size.toLong())
+} finally {
+    performanceTraces.stopTrace(trace)
+}
+```
+
+### 4. Analytics Tracking
+```kotlin
+// Track user actions
+analyticsManager.logUserAction("edit_profile", "profile")
+analyticsManager.logScreenView("user_list")
+analyticsManager.logFeatureUsage("image_upload")
+```
+
+### 5. Crashlytics Logging
+```kotlin
+// Log important events
+crashlyticsManager.log("User performed action: edit_profile")
+crashlyticsManager.setCustomKey("screen", "user_list")
+crashlyticsManager.setUserId(userId)
+```
+
+## Security Rules
+
+### Firestore Security Rules
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth.uid == userId;
+    }
+  }
+}
+```
+
+### Storage Security Rules
+```javascript
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /profile_images/{userId}/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth.uid == userId
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+  }
+}
+```
+
+## Testing
+
+### 1. Unit Tests
+- Mock Firebase services for unit tests
+- Test error handling scenarios
+- Verify analytics events are logged correctly
+
+### 2. Integration Tests
+- Use Firebase emulator suite for integration testing
+- Test authentication flows
+- Verify data synchronization
+
+### 3. UI Tests
+- Test notification handling
+- Verify analytics tracking
+- Test offline scenarios
+
+## Best Practices
+
+### 1. Data Modeling
+- Use consistent field names across Firestore collections
+- Implement proper data validation
+- Use appropriate data types
+
+### 2. Performance
+- Use pagination for large datasets
+- Implement proper caching strategies
+- Monitor performance with Firebase Performance
+
+### 3. Security
+- Always validate data on client and server
+- Use security rules to protect data
+- Implement proper authentication flows
+
+### 4. Monitoring
+- Set up alerts for critical errors
+- Monitor app performance metrics
+- Track user engagement
+
+## Common Patterns
+
+### 1. Real-time Data Sync
+```kotlin
+// Use Flow for real-time updates
+firestoreDataSource.getUsers().collect { result ->
+    when (result) {
+        is NetworkResult.Success -> updateUI(result.data)
+        is NetworkResult.Error -> handleError(result.message)
+    }
+}
+```
+
+### 2. Image Upload
+```kotlin
+// Compress and upload images
+val result = imageUploader.uploadAndCompressImage(
+    imageUri = imageUri,
+    userId = userId,
+    maxWidth = 800,
+    maxHeight = 600,
+    quality = 80
+)
+```
+
+### 3. Feature Flags
+```kotlin
+// Use Remote Config for feature flags
+val isNewUIEnabled = remoteConfigManager.isFeatureEnabled("enable_new_ui")
+if (isNewUIEnabled) {
+    // Show new UI
+} else {
+    // Show old UI
+}
+```
+
+### 4. Error Reporting
+```kotlin
+// Report errors to Crashlytics
+try {
+    // Risky operation
+} catch (e: Exception) {
+    crashlyticsManager.recordException(e)
+    analyticsManager.logError("operation_failed", e.message)
+}
+```
+
+## Configuration
+
+### 1. Firebase Initialization
+- Initialize Firebase in `Application.onCreate()`
+- Use `FirebaseInitializer` for proper setup
+- Handle initialization errors gracefully
+
+### 2. Dependencies
+- Use Firebase BoM for version management
+- Include only required Firebase services
+- Keep dependencies up to date
+
+### 3. Environment Setup
+- Use different Firebase projects for dev/prod
+- Configure proper security rules
+- Set up monitoring and alerts
+
+## Troubleshooting
+
+### Common Issues
+1. **Firebase not initialized**: Check `FirebaseInitializer` is called
+2. **Authentication errors**: Verify Firebase Console configuration
+3. **Permission denied**: Check security rules
+4. **FCM not working**: Verify device token and server config
+5. **Analytics not showing**: Wait 24-48 hours for data
+
+### Debug Mode
+```kotlin
+// Enable debug mode for development
+if (BuildConfig.DEBUG) {
+    FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(false)
+    FirebasePerformance.getInstance().setPerformanceCollectionEnabled(false)
+}
+```
+
+## Resources
+
+- [Firebase Documentation](https://firebase.google.com/docs)
+- [Firebase Console](https://console.firebase.google.com/)
+- [Firebase Security Rules](https://firebase.google.com/docs/rules)
+- [Firebase Emulator Suite](https://firebase.google.com/docs/emulator-suite)

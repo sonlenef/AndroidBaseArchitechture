@@ -1,0 +1,179 @@
+---
+alwaysApply: true
+description: Coding standards and best practices for the Android Compose project
+---
+
+# Coding Standards and Best Practices
+
+## General Principles
+
+### 1. NO HARDCODING
+- **NEVER** hardcode strings, dimensions, colors, or magic numbers
+- Use resources (`strings.xml`, `dimens.xml`, `colors.xml`)
+- Use constants defined in `Constants.kt` for API endpoints, database names
+- Use theme values for colors and typography
+- Use responsive utilities (`ResponsiveUtils`) for dimensions
+
+❌ **BAD**:
+```kotlin
+Text("Login", fontSize = 16.sp, color = Color(0xFF000000))
+val url = "https://api.example.com"
+```
+
+✅ **GOOD**:
+```kotlin
+Text(
+    text = stringResource(R.string.login_title),
+    style = MaterialTheme.typography.titleMedium,
+    color = MaterialTheme.colorScheme.onSurface
+)
+val url = Constants.BASE_URL
+```
+
+### 2. Immutability
+- Use `val` over `var` whenever possible
+- Use immutable data classes
+- Use `copy()` for state updates
+
+### 3. Null Safety
+- Prefer non-nullable types
+- Use safe call operator (`?.`) and Elvis operator (`?:`)
+- Avoid `!!` operator unless absolutely necessary
+
+### 4. Type Safety
+- Use sealed classes for state management
+- Use enums for fixed sets of values
+- Leverage Kotlin's type system
+
+## Code Organization
+
+### File Naming
+- Activities: `*Activity.kt`
+- Screens: `*Screen.kt`
+- ViewModels: `*ViewModel.kt`
+- Repositories: `*Repository.kt` (interface), `*RepositoryImpl.kt` (implementation)
+- Use Cases: `*UseCase.kt`
+- DTOs: `*Dto.kt`
+- Entities: `*Entity.kt`
+
+### Class Structure Order
+1. Companion object
+2. Properties
+3. Init blocks
+4. Constructor
+5. Lifecycle methods
+6. Public methods
+7. Private methods
+8. Inner classes
+
+### Function Naming
+- Use descriptive names: `getUserById()` not `get()`
+- Boolean functions start with `is`, `has`, `should`: `isValid()`, `hasPermission()`
+- Event handlers use `on` prefix: `onClick()`, `onValueChange()`
+
+## Compose Guidelines
+
+### 1. Composable Functions
+- Start with capital letter
+- Be pure (no side effects in composition)
+- Use `remember` for expensive calculations
+- Use `LaunchedEffect` for side effects
+- Use `derivedStateOf` for computed state
+
+### 2. State Management
+- Hoist state when possible
+- Use ViewModel for screen-level state
+- Use `collectAsStateWithLifecycle()` for Flow
+- Prefer unidirectional data flow
+
+### 3. Modifiers
+- Pass `Modifier` as first optional parameter
+- Chain modifiers from outermost to innermost
+- Don't create new Modifier instances unnecessarily
+
+```kotlin
+@Composable
+fun MyComponent(
+    data: String,
+    modifier: Modifier = Modifier  // Last parameter, default value
+) {
+    Text(
+        text = data,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    )
+}
+```
+
+## Resource Management
+
+### Strings (`strings.xml`)
+- Use descriptive keys: `login_button`, `error_network`
+- Use plurals for countable items
+- Use string parameters for dynamic content
+
+### Dimensions
+- Use responsive utilities for all dimensions
+- Reference: [ResponsiveUtils.kt](mdc:app/src/main/java/com/example/baseapp/presentation/util/ResponsiveUtils.kt)
+
+### Colors
+- Define in [Color.kt](mdc:app/src/main/java/com/example/baseapp/presentation/theme/Color.kt)
+- Use Material Theme colors in Composables
+- Support light and dark themes
+
+## Documentation
+
+### Code Comments
+- Use KDoc for public APIs
+- Explain "why", not "what"
+- Keep comments up-to-date
+
+```kotlin
+/**
+ * Validates user email format
+ * 
+ * @param email The email address to validate
+ * @return true if email format is valid, false otherwise
+ */
+fun isValidEmail(email: String): Boolean
+```
+
+### TODOs
+- Use TODO comments with context
+- Format: `// TODO: Description of what needs to be done`
+- Include ticket/issue reference if applicable
+
+## Error Handling
+
+### 1. Use Result/Sealed Classes
+- Don't use exceptions for control flow
+- Use `NetworkResult` for network operations
+- Use sealed classes for error states
+
+### 2. Logging
+- Use Timber or Android Log
+- Log errors with context
+- Don't log sensitive information
+
+### 3. User-Facing Errors
+- Provide clear, actionable error messages
+- Use string resources for error messages
+- Show retry options when appropriate
+
+## Performance
+
+### 1. Avoid Premature Optimization
+- Profile before optimizing
+- Focus on correctness first
+
+### 2. Compose Performance
+- Use `remember` and `derivedStateOf`
+- Use `key` in lists
+- Avoid recomposition with stable parameters
+- Use `LazyColumn/LazyRow` for long lists
+
+### 3. Memory Management
+- Clean up resources in `onDispose`
+- Cancel coroutines properly
+- Avoid memory leaks with lifecycle awareness

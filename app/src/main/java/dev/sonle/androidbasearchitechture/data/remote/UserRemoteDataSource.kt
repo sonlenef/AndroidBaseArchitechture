@@ -1,0 +1,47 @@
+package dev.sonle.androidbasearchitechture.data.remote
+
+import dev.sonle.androidbasearchitechture.core.network.ApiService
+import dev.sonle.androidbasearchitechture.core.network.NetworkResult
+import dev.sonle.androidbasearchitechture.data.model.UserDto
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import timber.log.Timber
+import javax.inject.Inject
+import javax.inject.Singleton
+
+/**
+ * Remote data source for User operations using Retrofit
+ */
+@Singleton
+class UserRemoteDataSource @Inject constructor(
+    private val apiService: ApiService
+) {
+    
+    /**
+     * Get all users from API
+     */
+    fun getUsers(): Flow<NetworkResult<List<UserDto>>> = flow {
+        try {
+            emit(NetworkResult.Loading)
+            val users = apiService.getUsers()
+            emit(NetworkResult.Success(users))
+        } catch (e: Exception) {
+            Timber.e(e, "Error fetching users from API")
+            emit(NetworkResult.Error("Failed to fetch users: ${e.message}", e))
+        }
+    }
+    
+    /**
+     * Get user by ID from API
+     */
+    fun getUserById(id: Long): Flow<NetworkResult<UserDto>> = flow {
+        try {
+            emit(NetworkResult.Loading)
+            val user = apiService.getUserById(id)
+            emit(NetworkResult.Success(user))
+        } catch (e: Exception) {
+            Timber.e(e, "Error fetching user $id from API")
+            emit(NetworkResult.Error("Failed to fetch user: ${e.message}", e))
+        }
+    }
+}

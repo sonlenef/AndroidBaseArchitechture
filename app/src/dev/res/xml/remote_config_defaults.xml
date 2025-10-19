@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<defaultsMap>
+    <!-- Development Environment Settings -->
+    <entry key="feature_new_ui" value="true" />
+    <entry key="feature_advanced_search" value="true" />
+    <entry key="feature_dark_mode" value="true" />
+    <entry key="feature_offline_mode" value="true" />
+    <entry key="feature_biometric_auth" value="false" />
+    
+    <!-- API Configuration -->
+    <entry key="api_timeout_seconds" value="60" />
+    <entry key="max_items_per_page" value="10" />
+    <entry key="retry_attempts" value="1" />
+    <entry key="cache_duration_hours" value="1" />
+    
+    <!-- App Configuration -->
+    <entry key="app_version_required" value="1.0.0" />
+    <entry key="force_update" value="false" />
+    <entry key="maintenance_mode" value="false" />
+    <entry key="maintenance_message" value="Development server is under maintenance." />
+    
+    <!-- Debug Settings -->
+    <entry key="enable_debug_logging" value="true" />
+    <entry key="enable_analytics" value="false" />
+    <entry key="enable_crashlytics" value="false" />
+    <entry key="enable_performance_monitoring" value="false" />
+    
+    <!-- UI Configuration -->
+    <entry key="default_theme" value="light" />
+    <entry key="animation_duration_ms" value="100" />
+    <entry key="pull_to_refresh_enabled" value="true" />
+    <entry key="infinite_scroll_enabled" value="true" />
+    
+    <!-- Security Settings -->
+    <entry key="session_timeout_minutes" value="120" />
+    <entry key="max_login_attempts" value="10" />
+    <entry key="password_min_length" value="4" />
+    <entry key="require_strong_password" value="false" />
+</defaultsMap>

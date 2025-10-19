@@ -1,0 +1,29 @@
+{
+    "project_info": {
+        "project_number": "555666777",
+        "project_id": "baseapp-prod",
+        "storage_bucket": "baseapp-prod.appspot.com"
+    },
+    "client": [
+        {
+            "client_info": {
+                "mobilesdk_app_id": "1:555666777:android:123456789abc",
+                "android_client_info": {
+                    "package_name": "dev.sonle.androidbasearchitechture"
+                }
+            },
+            "oauth_client": [],
+            "api_key": [
+                {
+                    "current_key": "AIzaSyProdKey555666777"
+                }
+            ],
+            "services": {
+                "appinvite_service": {
+                    "other_platform_oauth_client": []
+                }
+            }
+        }
+    ],
+    "configuration_version": "1"
+}

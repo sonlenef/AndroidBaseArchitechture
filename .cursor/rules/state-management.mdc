@@ -1,0 +1,357 @@
+---
+globs: **/*ViewModel.kt,**/features/**/*Screen.kt
+description: State management patterns for ViewModels and Composables
+---
+
+# State Management Guidelines
+
+## Overview
+
+This project uses **Unidirectional Data Flow (UDF)** pattern with ViewModels and Compose State.
+
+## State Management Rules
+
+### 1. State Lives in ViewModel
+```kotlin
+@HiltViewModel
+class MyViewModel @Inject constructor(
+    private val useCase: MyUseCase
+) : ViewModel() {
+    
+    // Mutable state (private)
+    private val _uiState = MutableStateFlow(MyUiState())
+    
+    // Immutable state (public)
+    val uiState: StateFlow<MyUiState> = _uiState.asStateFlow()
+    
+    // Events/Actions
+    fun onUserAction() {
+        _uiState.update { it.copy(/* new state */) }
+    }
+}
+```
+
+### 2. UI State as Data Class
+```kotlin
+data class MyUiState(
+    val isLoading: Boolean = false,
+    val data: List<Item> = emptyList(),
+    val error: String? = null,
+    val isSuccess: Boolean = false
+)
+```
+
+### 3. Use StateFlow for State
+✅ **GOOD**:
+```kotlin
+private val _uiState = MutableStateFlow(MyUiState())
+val uiState: StateFlow<MyUiState> = _uiState.asStateFlow()
+```
+
+❌ **BAD** (Don't use LiveData in new code):
+```kotlin
+private val _uiState = MutableLiveData<MyUiState>()
+val uiState: LiveData<MyUiState> = _uiState
+```
+
+## UI State Patterns
+
+### Pattern 1: Loading, Content, Error
+```kotlin
+data class ScreenUiState(
+    val isLoading: Boolean = false,
+    val data: List<Item>? = null,
+    val error: String? = null
+)
+
+// In Composable
+when {
+    uiState.isLoading -> LoadingIndicator()
+    uiState.error != null -> ErrorView(uiState.error)
+    uiState.data != null -> ContentView(uiState.data)
+}
+```
+
+### Pattern 2: Sealed Class State
+```kotlin
+sealed interface ScreenState {
+    object Loading : ScreenState
+    data class Success(val data: List<Item>) : ScreenState
+    data class Error(val message: String) : ScreenState
+}
+
+// In Composable
+when (val state = uiState.value) {
+    is ScreenState.Loading -> LoadingIndicator()
+    is ScreenState.Success -> ContentView(state.data)
+    is ScreenState.Error -> ErrorView(state.message)
+}
+```
+
+### Pattern 3: Multiple State Properties
+```kotlin
+data class FormUiState(
+    val email: String = "",
+    val emailError: String? = null,
+    val password: String = "",
+    val passwordError: String? = null,
+    val isLoading: Boolean = false,
+    val isSubmitEnabled: Boolean = false
+)
+```
+
+## State Updates
+
+### 1. Use `update` for StateFlow
+```kotlin
+fun onEmailChange(email: String) {
+    _uiState.update { currentState ->
+        currentState.copy(
+            email = email,
+            emailError = validateEmail(email)
+        )
+    }
+}
+```
+
+### 2. Don't Mutate State Directly
+❌ **BAD**:
+```kotlin
+_uiState.value.email = "new@email.com"  // DON'T
+```
+
+✅ **GOOD**:
+```kotlin
+_uiState.update { it.copy(email = "new@email.com") }
+```
+
+## Collecting State in Composables
+
+### Use `collectAsStateWithLifecycle()`
+```kotlin
+@Composable
+fun MyScreen(viewModel: MyViewModel = hiltViewModel()) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    
+    // Use uiState
+    MyContent(uiState = uiState)
+}
+```
+
+### For Multiple Flows
+```kotlin
+@Composable
+fun MyScreen(viewModel: MyViewModel = hiltViewModel()) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val events by viewModel.events.collectAsStateWithLifecycle(initialValue = null)
+    
+    // Handle events
+    LaunchedEffect(events) {
+        events?.let { event ->
+            // Handle one-time event
+        }
+    }
+}
+```
+
+## Side Effects
+
+### 1. Use LaunchedEffect for One-Time Events
+```kotlin
+@Composable
+fun MyScreen(viewModel: MyViewModel = hiltViewModel()) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val navigator = LocalNavigator.currentOrThrow
+    
+    LaunchedEffect(uiState.isSuccess) {
+        if (uiState.isSuccess) {
+            navigator.push(NextScreen())
+        }
+    }
+}
+```
+
+### 2. Use DisposableEffect for Cleanup
+```kotlin
+@Composable
+fun MyScreen(viewModel: MyViewModel = hiltViewModel()) {
+    DisposableEffect(Unit) {
+        viewModel.startListening()
+        onDispose {
+            viewModel.stopListening()
+        }
+    }
+}
+```
+
+### 3. Use derivedStateOf for Computed State
+```kotlin
+@Composable
+fun MyScreen(items: List<Item>) {
+    val itemCount by remember { 
+        derivedStateOf { items.size }
+    }
+    
+    Text("Total: $itemCount")
+}
+```
+
+## Event Handling
+
+### Pattern 1: Single Event Flow
+```kotlin
+@HiltViewModel
+class MyViewModel @Inject constructor() : ViewModel() {
+    
+    private val _events = Channel<MyEvent>()
+    val events = _events.receiveAsFlow()
+    
+    fun triggerEvent() {
+        viewModelScope.launch {
+            _events.send(MyEvent.ShowSnackbar("Success"))
+        }
+    }
+}
+
+// In Composable
+LaunchedEffect(Unit) {
+    viewModel.events.collect { event ->
+        when (event) {
+            is MyEvent.ShowSnackbar -> {
+                snackbarHostState.showSnackbar(event.message)
+            }
+        }
+    }
+}
+```
+
+### Pattern 2: Event as State Property
+```kotlin
+data class UiState(
+    val data: List<Item> = emptyList(),
+    val showSuccessMessage: Boolean = false
+)
+
+// Clear after handling
+LaunchedEffect(uiState.showSuccessMessage) {
+    if (uiState.showSuccessMessage) {
+        snackbarHostState.showSnackbar("Success")
+        viewModel.clearSuccessMessage()
+    }
+}
+```
+
+## Async Operations in ViewModel
+
+### Use viewModelScope
+```kotlin
+@HiltViewModel
+class MyViewModel @Inject constructor(
+    private val useCase: MyUseCase
+) : ViewModel() {
+    
+    fun loadData() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            
+            useCase()
+                .catch { exception ->
+                    _uiState.update { 
+                        it.copy(
+                            isLoading = false,
+                            error = exception.message
+                        )
+                    }
+                }
+                .collect { result ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            data = result,
+                            error = null
+                        )
+                    }
+                }
+        }
+    }
+}
+```
+
+## State Hoisting
+
+### Hoist State When Reusing Components
+```kotlin
+// Stateless component
+@Composable
+fun TextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // Component is stateless
+}
+
+// State in parent
+@Composable
+fun MyScreen() {
+    var text by remember { mutableStateOf("") }
+    
+    TextField(
+        value = text,
+        onValueChange = { text = it }
+    )
+}
+```
+
+## Testing State
+
+### Unit Test State Changes
+```kotlin
+@Test
+fun `loadData should update state to loading then success`() = runTest {
+    // Given
+    val testData = listOf(Item(1), Item(2))
+    coEvery { useCase() } returns flowOf(testData)
+    
+    // When
+    viewModel.loadData()
+    
+    // Then
+    viewModel.uiState.test {
+        val loadingState = awaitItem()
+        assertTrue(loadingState.isLoading)
+        
+        val successState = awaitItem()
+        assertFalse(successState.isLoading)
+        assertEquals(testData, successState.data)
+    }
+}
+```
+
+## Checklist
+
+- [ ] State is defined in ViewModel
+- [ ] State is immutable (exposed as StateFlow/State)
+- [ ] State updates use `copy()` or `update()`
+- [ ] UI collects state with `collectAsStateWithLifecycle()`
+- [ ] Side effects use appropriate Effect APIs
+- [ ] Async operations use `viewModelScope`
+- [ ] State is testable
+- [ ] No business logic in Composables
+
+## Common Mistakes
+
+❌ **DON'T**:
+- Mutate state directly
+- Use LiveData in new code
+- Put business logic in Composables
+- Forget lifecycle awareness
+- Create state in Composables for screen-level state
+
+✅ **DO**:
+- Use StateFlow for state
+- Keep state immutable
+- Use `update()` for state changes
+- Collect with `collectAsStateWithLifecycle()`
+- Test state changes
+- Hoist state when appropriate

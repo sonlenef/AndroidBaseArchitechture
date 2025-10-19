@@ -1,0 +1,313 @@
+# Environment Configuration Rule
+
+## Overview
+
+This rule enforces best practices for multi-environment setup in Android projects with development, staging, and production environments.
+
+## Environment Structure
+
+### Product Flavors
+- **MUST** use product flavors for environment separation
+- **MUST** define `dev`, `staging`, and `prod` flavors
+- **MUST** set `applicationIdSuffix` for dev (.dev) and staging (.staging)
+- **MUST** set `versionNameSuffix` for dev (-dev) and staging (-staging)
+- **MUST** use `buildConfigField` for environment-specific values
+
+### Build Variants
+- **MUST** support all combinations: devDebug, devRelease, stagingDebug, stagingRelease, prodDebug, prodRelease
+- **MUST** use debug signing for dev/staging, release signing for prod
+- **MUST** enable BuildConfig generation
+
+## Environment Configuration
+
+### EnvironmentConfig.kt
+- **MUST** create `EnvironmentConfig` object for environment management
+- **MUST** provide environment detection methods (`isProduction`, `isStaging`, `isDevelopment`)
+- **MUST** define feature flags per environment
+- **MUST** provide utility methods for environment-specific logic
+
+### Feature Flags
+- **MUST** disable debug logging in production
+- **MUST** enable strict mode only in development
+- **MUST** enable Crashlytics in staging and production
+- **MUST** enable Analytics in staging and production
+- **MUST** enable Performance Monitoring in staging and production
+
+## Firebase Configuration
+
+### Separate Projects
+- **MUST** use separate Firebase projects for each environment
+- **MUST** place `google-services.json` in flavor-specific directories
+- **MUST** configure Firebase services based on environment
+
+### Directory Structure
+```
+app/src/
+├── dev/google-services.json
+├── staging/google-services.json
+└── prod/google-services.json
+```
+
+### Firebase Services
+- **MUST** configure Crashlytics per environment
+- **MUST** configure Analytics per environment
+- **MUST** set environment-specific custom keys
+- **MUST** use environment-specific logging
+
+## API Configuration
+
+### Network Module
+- **MUST** use `BuildConfig.API_BASE_URL` instead of hardcoded URLs
+- **MUST** define different API endpoints per environment
+- **MUST** use environment-specific timeouts
+
+### API Endpoints
+- **Development**: `https://dev-api.example.com/`
+- **Staging**: `https://staging-api.example.com/`
+- **Production**: `https://api.example.com/`
+
+## Resource Management
+
+### String Resources
+- **MUST** create flavor-specific string resources
+- **MUST** define environment-specific app names
+- **MUST** provide environment information strings
+
+### Remote Config Defaults
+- **MUST** create environment-specific `remote_config_defaults.xml`
+- **MUST** define different default values per environment
+- **MUST** use appropriate values for each environment
+
+## Environment Indicators
+
+### Environment Badge
+- **MUST** create `EnvironmentBadge` composable
+- **MUST** display environment name in non-production builds
+- **MUST** use different colors for dev (green) and staging (orange)
+- **MUST** hide in production builds
+
+### Environment Info
+- **MUST** create `EnvironmentInfo` composable for debugging
+- **MUST** display detailed environment information
+- **MUST** show API URL, feature flags, and configuration
+- **MUST** only display in non-production builds
+
+## CI/CD Integration
+
+### GitHub Actions
+- **MUST** use matrix strategy for all environments
+- **MUST** build and test all flavors
+- **MUST** generate coverage reports per environment
+- **MUST** create environment-specific releases
+
+### Workflow Structure
+- **MUST** have separate jobs for dev, staging, and prod releases
+- **MUST** use environment-specific secrets
+- **MUST** upload environment-specific artifacts
+- **MUST** use appropriate release channels
+
+## Security Considerations
+
+### Firebase Security Rules
+- **MUST** implement different security rules per environment
+- **MUST** use relaxed rules for development
+- **MUST** use production-like rules for staging
+- **MUST** use strict rules for production
+
+### API Security
+- **MUST** use different API keys per environment
+- **MUST** implement environment-specific rate limiting
+- **MUST** use HTTPS for all environments
+- **MUST** implement proper authentication
+
+### Signing Configuration
+- **MUST** use debug keystore for dev/staging
+- **MUST** use release keystore for production
+- **MUST** store signing keys securely
+
+## Code Organization
+
+### Environment Detection
+- **MUST** use `EnvironmentConfig` for environment detection
+- **MUST** avoid hardcoding environment-specific values
+- **MUST** use BuildConfig fields for configuration
+- **MUST** implement proper error handling
+
+### Logging
+- **MUST** use environment-specific log tags
+- **MUST** disable debug logging in production
+- **MUST** use `EnvironmentConfig.getLogTag()` for consistent logging
+- **MUST** log environment information in Firebase services
+
+### Error Handling
+- **MUST** implement environment-specific error handling
+- **MUST** provide different error messages per environment
+- **MUST** use appropriate error reporting per environment
+- **MUST** handle environment-specific failures gracefully
+
+## Testing Requirements
+
+### Unit Tests
+- **MUST** test all environment configurations
+- **MUST** verify environment detection logic
+- **MUST** test environment-specific feature flags
+- **MUST** test environment-specific error handling
+
+### UI Tests
+- **MUST** test environment badges display correctly
+- **MUST** test environment info composable
+- **MUST** verify environment-specific UI behavior
+- **MUST** test environment switching
+
+### Integration Tests
+- **MUST** test Firebase services per environment
+- **MUST** verify API endpoints per environment
+- **MUST** test environment-specific configurations
+- **MUST** verify environment-specific features
+
+## Documentation Requirements
+
+### Environment Setup Guide
+- **MUST** create comprehensive environment setup documentation
+- **MUST** document all environment configurations
+- **MUST** provide troubleshooting guide
+- **MUST** include migration instructions
+
+### API Documentation
+- **MUST** document environment-specific API endpoints
+- **MUST** document environment-specific configurations
+- **MUST** provide environment-specific examples
+- **MUST** document security considerations
+
+## Prohibited Practices
+
+### Hardcoding
+- **NEVER** hardcode environment-specific values
+- **NEVER** use hardcoded API URLs
+- **NEVER** hardcode Firebase project IDs
+- **NEVER** hardcode environment-specific settings
+
+### Environment Mixing
+- **NEVER** mix environment configurations
+- **NEVER** use production keys in development
+- **NEVER** use development settings in production
+- **NEVER** share environment-specific secrets
+
+### Inconsistent Configuration
+- **NEVER** use different configuration patterns per environment
+- **NEVER** skip environment-specific configurations
+- **NEVER** use default values for environment-specific settings
+- **NEVER** ignore environment-specific requirements
+
+## Validation Checklist
+
+### Build Configuration
+- [ ] Product flavors defined correctly
+- [ ] Build variants available
+- [ ] BuildConfig fields set
+- [ ] Signing configuration correct
+
+### Firebase Configuration
+- [ ] Separate Firebase projects
+- [ ] Correct google-services.json placement
+- [ ] Environment-specific Firebase settings
+- [ ] Proper Firebase service configuration
+
+### Environment Management
+- [ ] EnvironmentConfig created
+- [ ] Feature flags defined
+- [ ] Environment detection working
+- [ ] Environment-specific logic implemented
+
+### CI/CD Integration
+- [ ] Matrix builds configured
+- [ ] Environment-specific workflows
+- [ ] Proper artifact naming
+- [ ] Environment-specific releases
+
+### Security
+- [ ] Environment-specific security rules
+- [ ] Proper API key management
+- [ ] Secure signing configuration
+- [ ] Environment isolation
+
+### Testing
+- [ ] All environments tested
+- [ ] Environment-specific tests
+- [ ] Coverage reports per environment
+- [ ] Integration tests working
+
+### Documentation
+- [ ] Environment setup guide
+- [ ] Configuration documentation
+- [ ] Troubleshooting guide
+- [ ] Migration instructions
+
+## Examples
+
+### Correct Environment Detection
+```kotlin
+object EnvironmentConfig {
+    val isProduction: Boolean = BuildConfig.ENVIRONMENT == "production"
+    val isStaging: Boolean = BuildConfig.ENVIRONMENT == "staging"
+    val isDevelopment: Boolean = BuildConfig.ENVIRONMENT == "development"
+    
+    val enableDebugLogging: Boolean = !isProduction
+    val crashlyticsEnabled: Boolean = !isDevelopment
+    val analyticsEnabled: Boolean = isProduction || isStaging
+}
+```
+
+### Correct Firebase Configuration
+```kotlin
+private fun initializeCrashlytics() {
+    val crashlytics = FirebaseCrashlytics.getInstance()
+    crashlytics.setCrashlyticsCollectionEnabled(EnvironmentConfig.crashlyticsEnabled)
+    crashlytics.setCustomKey("environment", EnvironmentConfig.environment)
+}
+```
+
+### Correct Environment Badge
+```kotlin
+@Composable
+fun EnvironmentBadge() {
+    if (!EnvironmentConfig.isProduction) {
+        Surface(
+            color = if (EnvironmentConfig.isDevelopment) Color.Green else Color.Orange,
+            modifier = Modifier.padding(8.dp)
+        ) {
+            Text(
+                text = EnvironmentConfig.environment.uppercase(),
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+            )
+        }
+    }
+}
+```
+
+### Correct CI/CD Matrix
+```yaml
+strategy:
+  matrix:
+    flavor: [dev, staging, prod]
+    
+steps:
+  - name: Build ${{ matrix.flavor }} APK
+    run: ./gradlew assemble${{ matrix.flavor }}Debug
+```
+
+## Enforcement
+
+This rule is enforced through:
+- Code reviews
+- CI/CD pipeline checks
+- Automated testing
+- Documentation reviews
+- Security audits
+
+Violations of this rule will result in:
+- Build failures
+- Code review rejections
+- Security warnings
+- Documentation updates
+- Additional testing requirements

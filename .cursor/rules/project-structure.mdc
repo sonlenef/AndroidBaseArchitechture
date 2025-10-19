@@ -1,0 +1,66 @@
+---
+alwaysApply: true
+description: Project structure and architecture guidelines for the Android Compose base application
+---
+
+# Project Structure and Architecture
+
+## Architecture Overview
+
+This project follows **Clean Architecture** with **MVVM** pattern:
+
+- **Domain Layer** (`domain/`): Business logic, entities, use cases, repository interfaces
+- **Data Layer** (`data/`): Repository implementations, data sources (local/remote), DTOs
+- **Presentation Layer** (`presentation/`): UI components, ViewModels, screens, navigation
+
+## Directory Structure
+
+```
+app/src/main/java/com/example/baseapp/
+├── core/                          # Core functionality
+│   ├── di/                        # Dependency injection modules
+│   ├── network/                   # Network utilities
+│   ├── database/                  # Database configuration
+│   └── util/                      # Utility classes
+├── data/                          # Data layer
+│   ├── local/                     # Local data sources (Room)
+│   ├── remote/                    # Remote data sources (Retrofit)
+│   ├── model/                     # DTOs and Entities
+│   └── repository/                # Repository implementations
+├── domain/                        # Domain layer
+│   ├── model/                     # Domain models
+│   ├── repository/                # Repository interfaces
+│   └── usecase/                   # Use cases
+└── presentation/                  # Presentation layer
+    ├── components/                # Reusable UI components
+    ├── features/                  # Feature modules
+    ├── navigation/                # Navigation logic
+    ├── theme/                     # Theme and styling
+    └── util/                      # Presentation utilities
+```
+
+## Key Files
+
+- Main entry: [MainActivity.kt](mdc:app/src/main/java/com/example/baseapp/MainActivity.kt)
+- Application: [MyApplication.kt](mdc:app/src/main/java/com/example/baseapp/MyApplication.kt)
+- Dependencies: [libs.versions.toml](mdc:gradle/libs.versions.toml)
+- Build configuration: [build.gradle.kts](mdc:app/build.gradle.kts)
+
+## Technology Stack
+
+- **UI**: Jetpack Compose with Material 3
+- **Navigation**: Voyager
+- **DI**: Hilt
+- **Network**: Retrofit + Gson
+- **Database**: Room
+- **Async**: Kotlin Coroutines + Flow
+- **Testing**: JUnit, MockK, Compose Test, Turbine
+
+## Architecture Principles
+
+1. **Separation of Concerns**: Each layer has distinct responsibilities
+2. **Dependency Rule**: Dependencies point inward (presentation → domain ← data)
+3. **Single Responsibility**: Each class has one reason to change
+4. **Testability**: All layers are independently testable
+5. **Reactive**: Use Flow for data streams
+6. **Responsive**: Support multiple screen sizes (phones, tablets, foldables)

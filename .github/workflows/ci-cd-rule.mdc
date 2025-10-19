@@ -1,0 +1,264 @@
+---
+alwaysApply: true
+description: CI/CD best practices and requirements for the Android project
+---
+
+# CI/CD Best Practices
+
+## Overview
+
+This project uses GitHub Actions for CI/CD with strict quality gates and automated testing requirements.
+
+## Workflow Structure
+
+### Main CI Workflow (`.github/workflows/ci.yml`)
+- **Triggers**: Push to main/develop, PRs, manual dispatch
+- **Jobs**: Lint, Unit Tests, UI Tests, Coverage, Build
+- **Parallel Execution**: Lint, unit tests, and UI tests run in parallel
+- **Quality Gates**: All jobs must pass for build to succeed
+
+### Release Workflow (`.github/workflows/release.yml`)
+- **Triggers**: Version tags (v*.*.*), manual dispatch
+- **Environment**: Production
+- **Outputs**: Signed APK/AAB, GitHub release, Play Store upload
+
+### PR Check Workflow (`.github/workflows/pr-check.yml`)
+- **Triggers**: PR opened/updated
+- **Validations**: Title format, test files, hardcoded values
+- **Feedback**: Automated PR comments with validation results
+
+## Quality Gates
+
+### Mandatory Requirements
+- ✅ **All tests must pass** (unit + UI)
+- ✅ **No lint errors**
+- ✅ **Code coverage meets thresholds**
+- ✅ **No build warnings**
+- ✅ **PR title follows conventional commits**
+
+### Coverage Thresholds
+- **ViewModels**: ≥ 90%
+- **Use Cases**: 100%
+- **Repositories**: ≥ 85%
+- **Utilities**: 100%
+
+### Test Requirements
+- **Every Kotlin file** must have corresponding unit tests
+- **Every Screen/Component** must have UI tests
+- **All tests must pass** before merge
+- **No skipped or ignored tests**
+
+## Branch Protection Rules
+
+### Required Status Checks
+- `lint` - Lint Check
+- `unit-tests` - Unit Tests
+- `ui-tests` - UI Tests
+- `coverage` - Code Coverage
+- `build` - Build APK
+
+### Additional Rules
+- Require PR reviews (at least 1)
+- Require branches to be up to date
+- Require signed commits (optional)
+- Dismiss stale reviews when new commits are pushed
+
+## GitHub Secrets Required
+
+Set up in repository settings:
+
+```
+KEYSTORE_FILE          # Base64 encoded keystore
+KEYSTORE_PASSWORD      # Keystore password
+KEY_ALIAS              # Key alias
+KEY_PASSWORD           # Key password
+PLAY_STORE_JSON        # Play Store service account JSON
+CODECOV_TOKEN          # Codecov token (optional)
+SLACK_WEBHOOK          # Slack webhook for notifications (optional)
+```
+
+## Workflow Best Practices
+
+### 1. Caching Strategy
+```yaml
+- name: Cache Gradle packages
+  uses: actions/cache@v4
+  with:
+    path: |
+      ~/.gradle/caches
+      ~/.gradle/wrapper
+    key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+```
+
+### 2. Parallel Execution
+```yaml
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+  unit-tests:
+    runs-on: ubuntu-latest
+  ui-tests:
+    runs-on: macos-latest
+  # These run in parallel
+```
+
+### 3. Matrix Strategy for UI Tests
+```yaml
+strategy:
+  matrix:
+    api-level: [28, 31, 34]
+```
+
+### 4. Conditional Steps
+```yaml
+- name: Upload to Play Store
+  if: ${{ secrets.PLAY_STORE_JSON != '' }}
+```
+
+## PR Requirements
+
+### Title Format
+Must follow conventional commits:
+- `feat: add new feature`
+- `fix: resolve bug`
+- `docs: update documentation`
+- `style: code formatting`
+- `refactor: code restructuring`
+- `test: add tests`
+- `chore: maintenance tasks`
+- `ci: CI/CD changes`
+
+### Test File Requirements
+- **Unit tests** for all new Kotlin files
+- **UI tests** for all new screens/components
+- **Integration tests** for new features
+- **All tests must pass**
+
+### Code Quality Requirements
+- No hardcoded strings (use `strings.xml`)
+- No hardcoded dimensions (use `ResponsiveUtils`)
+- No hardcoded colors (use Material Theme)
+- Proper error handling
+- Documentation for public APIs
+
+## Release Process
+
+### Version Tags
+- Format: `v1.0.0`, `v1.0.1`, `v2.0.0-beta.1`
+- Semantic versioning: `MAJOR.MINOR.PATCH`
+- Pre-release: `-alpha.1`, `-beta.1`, `-rc.1`
+
+### Release Tracks
+1. **Internal Testing**: Automatic from develop branch
+2. **Beta Testing**: Manual promotion from internal
+3. **Production**: Manual promotion from beta
+
+### Release Artifacts
+- **Debug APK**: For testing
+- **Release AAB**: For Play Store
+- **Release APK**: For direct distribution
+- **Source Code**: Tagged release
+
+## Monitoring & Notifications
+
+### Build Status
+- GitHub Actions dashboard
+- PR status checks
+- Email notifications for failures
+
+### Coverage Tracking
+- Codecov integration
+- Coverage reports in PRs
+- Coverage trends over time
+
+### Release Notifications
+- Slack notifications
+- GitHub release notes
+- Play Store release notes
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Tests Failing**
+   - Check test logs in Actions
+   - Run tests locally first
+   - Fix flaky tests
+
+2. **Lint Errors**
+   - Run `./gradlew lint` locally
+   - Fix all lint issues
+   - Update lint rules if needed
+
+3. **Coverage Below Threshold**
+   - Add missing tests
+   - Check coverage report
+   - Update thresholds if appropriate
+
+4. **Build Failures**
+   - Check Gradle logs
+   - Verify dependencies
+   - Check signing configuration
+
+### Local Testing
+```bash
+# Test workflows locally
+act -j unit-tests
+
+# Validate workflow syntax
+gh workflow view ci.yml
+
+# Run specific workflow
+gh workflow run ci.yml
+```
+
+## Performance Optimization
+
+### Build Time
+- Use Gradle build cache
+- Parallel test execution
+- Cached dependencies
+- Incremental builds
+
+### Resource Usage
+- Appropriate runner sizes
+- Efficient caching strategies
+- Cleanup after builds
+- Resource limits
+
+## Security Considerations
+
+### Secret Management
+- Use GitHub Secrets for sensitive data
+- Rotate secrets regularly
+- Never commit secrets to repository
+- Use environment-specific secrets
+
+### Code Scanning
+- Dependency vulnerability scanning
+- Static analysis with Detekt
+- Security linting rules
+- OWASP dependency check
+
+## Documentation
+
+### Workflow Documentation
+- `.github/workflows/README.md`
+- Inline comments in YAML
+- Step descriptions
+- Error handling
+
+### Process Documentation
+- `CONTRIBUTING.md` - Contribution guidelines
+- `docs/CI_CD.md` - Detailed CI/CD docs
+- `docs/RELEASING.md` - Release process
+
+## Benefits
+
+- **Automated Testing**: Every commit tested
+- **Code Quality**: Enforced standards
+- **Fast Feedback**: Quick PR validation
+- **Reliable Releases**: Consistent build process
+- **Coverage Tracking**: Monitor test coverage
+- **Time Savings**: Automated deployment
+- **Risk Reduction**: Catch bugs early
