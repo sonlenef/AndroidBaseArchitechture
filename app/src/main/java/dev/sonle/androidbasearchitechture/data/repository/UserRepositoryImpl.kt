@@ -1,6 +1,5 @@
 package dev.sonle.androidbasearchitechture.data.repository
 
-import dev.sonle.androidbasearchitechture.core.di.IoDispatcher
 import dev.sonle.androidbasearchitechture.core.network.NetworkResult
 import dev.sonle.androidbasearchitechture.data.local.UserLocalDataSource
 import dev.sonle.androidbasearchitechture.data.mapper.UserMapper.toDomain
@@ -16,18 +15,15 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import timber.log.Timber
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Repository implementation for User operations
  * Implements offline-first strategy
  */
-@Singleton
-class UserRepositoryImpl @Inject constructor(
+class UserRepositoryImpl(
     private val localDataSource: UserLocalDataSource,
     private val remoteDataSource: UserRemoteDataSource,
-    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
+    private val ioDispatcher: CoroutineDispatcher
 ) : UserRepository {
     
     override fun getUsers(): Flow<List<User>> {

@@ -3,12 +3,12 @@ package dev.sonle.androidbasearchitechture.domain.usecase
 import dev.sonle.androidbasearchitechture.core.network.NetworkResult
 import dev.sonle.androidbasearchitechture.domain.model.User
 import dev.sonle.androidbasearchitechture.domain.repository.UserRepository
-import javax.inject.Inject
+
 
 /**
  * Use case for refreshing users from remote source
  */
-class RefreshUsersUseCase @Inject constructor(
+class RefreshUsersUseCase(
     private val userRepository: UserRepository
 ) {
     

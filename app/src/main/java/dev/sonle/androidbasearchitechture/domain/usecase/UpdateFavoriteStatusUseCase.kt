@@ -2,12 +2,12 @@ package dev.sonle.androidbasearchitechture.domain.usecase
 
 import dev.sonle.androidbasearchitechture.core.network.NetworkResult
 import dev.sonle.androidbasearchitechture.domain.repository.UserRepository
-import javax.inject.Inject
+
 
 /**
  * Use case for updating user favorite status
  */
-class UpdateFavoriteStatusUseCase @Inject constructor(
+class UpdateFavoriteStatusUseCase(
     private val userRepository: UserRepository
 ) {
     

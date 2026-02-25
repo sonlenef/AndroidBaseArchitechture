@@ -4,14 +4,11 @@ import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import dev.sonle.androidbasearchitechture.core.config.EnvironmentConfig
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Remote Config manager for feature flags and configuration
  */
-@Singleton
-class RemoteConfigManager @Inject constructor(
+class RemoteConfigManager(
     private val firebaseRemoteConfig: FirebaseRemoteConfig
 ) {
     

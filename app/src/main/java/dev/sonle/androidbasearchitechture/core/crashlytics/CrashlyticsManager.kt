@@ -3,14 +3,11 @@ package dev.sonle.androidbasearchitechture.core.crashlytics
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dev.sonle.androidbasearchitechture.core.config.EnvironmentConfig
 import timber.log.Timber
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Crashlytics manager for crash reporting and custom logging
  */
-@Singleton
-class CrashlyticsManager @Inject constructor(
+class CrashlyticsManager(
     private val firebaseCrashlytics: FirebaseCrashlytics
 ) {
     

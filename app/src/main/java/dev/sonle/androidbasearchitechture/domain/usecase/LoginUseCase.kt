@@ -6,12 +6,11 @@ import dev.sonle.androidbasearchitechture.core.util.ValidationUtils
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import timber.log.Timber
-import javax.inject.Inject
 
 /**
  * Use case for user login
  */
-class LoginUseCase @Inject constructor() {
+class LoginUseCase {
     
     /**
      * Login with email and password

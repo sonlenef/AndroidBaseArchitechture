@@ -4,14 +4,10 @@ package dev.sonle.androidbasearchitechture.core.performance
 // import com.google.firebase.performance.metrics.Trace
 import dev.sonle.androidbasearchitechture.core.config.EnvironmentConfig
 import timber.log.Timber
-import javax.inject.Inject
-import javax.inject.Singleton
-
 /**
  * Performance monitoring manager for tracking app performance
  */
-@Singleton
-class PerformanceMonitor @Inject constructor(
+class PerformanceMonitor(
     // private val firebasePerformance: FirebasePerformance
 ) {
     

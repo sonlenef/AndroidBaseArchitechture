@@ -1,23 +1,14 @@
 package dev.sonle.androidbasearchitechture.core.di
 
-import dagger.Binds
-import dagger.Module
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
 import dev.sonle.androidbasearchitechture.data.repository.UserRepositoryImpl
 import dev.sonle.androidbasearchitechture.domain.repository.UserRepository
-import javax.inject.Singleton
+import org.koin.core.module.dsl.singleOf
+import org.koin.dsl.bind
+import org.koin.dsl.module
 
 /**
  * Module providing repository implementations
  */
-@Module
-@InstallIn(SingletonComponent::class)
-abstract class RepositoryModule {
-    
-    @Binds
-    @Singleton
-    abstract fun bindUserRepository(
-        userRepositoryImpl: UserRepositoryImpl
-    ): UserRepository
+val repositoryModule = module {
+    singleOf(::UserRepositoryImpl) bind UserRepository::class
 }

@@ -2,7 +2,6 @@ package dev.sonle.androidbasearchitechture.ui.features.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.sonle.androidbasearchitechture.core.network.NetworkResult
 import dev.sonle.androidbasearchitechture.core.util.ValidationUtils
 import dev.sonle.androidbasearchitechture.domain.model.User
@@ -13,13 +12,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
+
 
 /**
  * ViewModel for Profile screen
  */
-@HiltViewModel
-class ProfileViewModel @Inject constructor(
+class ProfileViewModel(
     private val getUserByIdUseCase: GetUserByIdUseCase,
     private val updateUserUseCase: UpdateUserUseCase
 ) : ViewModel() {

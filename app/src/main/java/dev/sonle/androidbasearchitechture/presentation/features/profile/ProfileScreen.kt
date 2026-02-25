@@ -43,7 +43,7 @@ import dev.sonle.androidbasearchitechture.ui.components.CustomTextField
 import dev.sonle.androidbasearchitechture.ui.components.ErrorView
 import dev.sonle.androidbasearchitechture.ui.components.LoadingIndicator
 import dev.sonle.androidbasearchitechture.util.ResponsiveUtils
-import androidx.hilt.navigation.compose.hiltViewModel
+import org.koin.androidx.compose.koinViewModel
 
 /**
  * Profile screen implementation
@@ -53,7 +53,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 fun ProfileScreen(
     userId: String
 ) {
-    val viewModel: ProfileViewModel = hiltViewModel()
+    val viewModel: ProfileViewModel = koinViewModel()
     val uiState by viewModel.uiState.collectAsState()
     
     LaunchedEffect(userId) {

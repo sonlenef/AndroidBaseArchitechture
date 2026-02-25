@@ -30,14 +30,14 @@ import dev.sonle.androidbasearchitechture.ui.components.ErrorView
 import dev.sonle.androidbasearchitechture.ui.components.LoadingIndicator
 import dev.sonle.androidbasearchitechture.util.ResponsiveUtils
 import dev.sonle.androidbasearchitechture.presentation.navigation.LocalNavigator
-import androidx.hilt.navigation.compose.hiltViewModel
+import org.koin.androidx.compose.koinViewModel
 
 /**
  * Login screen implementation
  */
 @Composable
 fun LoginScreen() {
-    val viewModel: LoginViewModel = hiltViewModel()
+    val viewModel: LoginViewModel = koinViewModel()
     val uiState by viewModel.uiState.collectAsState()
     
     LoginContent(

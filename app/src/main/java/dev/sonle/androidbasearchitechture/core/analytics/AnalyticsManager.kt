@@ -3,14 +3,11 @@ package dev.sonle.androidbasearchitechture.core.analytics
 import com.google.firebase.analytics.FirebaseAnalytics
 import dev.sonle.androidbasearchitechture.core.config.EnvironmentConfig
 import timber.log.Timber
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Analytics manager for tracking user events and screen views
  */
-@Singleton
-class AnalyticsManager @Inject constructor(
+class AnalyticsManager(
     private val firebaseAnalytics: FirebaseAnalytics
 ) {
     

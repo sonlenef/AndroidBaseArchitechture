@@ -4,12 +4,12 @@ import dev.sonle.androidbasearchitechture.core.network.NetworkResult
 import dev.sonle.androidbasearchitechture.core.util.ValidationUtils
 import dev.sonle.androidbasearchitechture.domain.model.User
 import dev.sonle.androidbasearchitechture.domain.repository.UserRepository
-import javax.inject.Inject
+
 
 /**
  * Use case for updating user information
  */
-class UpdateUserUseCase @Inject constructor(
+class UpdateUserUseCase(
     private val userRepository: UserRepository
 ) {
     

@@ -1,6 +1,5 @@
 package dev.sonle.androidbasearchitechture.core.di
 
-import android.content.Context
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.crashlytics.FirebaseCrashlytics
@@ -9,50 +8,19 @@ import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.perf.FirebasePerformance
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.storage.FirebaseStorage
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
+import org.koin.android.ext.koin.androidContext
+import org.koin.dsl.module
 
 /**
  * Module providing Firebase-related dependencies
  */
-@Module
-@InstallIn(SingletonComponent::class)
-object FirebaseModule {
-
-    @Provides
-    @Singleton
-    fun provideFirebaseAuth(): FirebaseAuth = FirebaseAuth.getInstance()
-
-    @Provides
-    @Singleton
-    fun provideFirebaseFirestore(): FirebaseFirestore = FirebaseFirestore.getInstance()
-
-    @Provides
-    @Singleton
-    fun provideFirebaseStorage(): FirebaseStorage = FirebaseStorage.getInstance()
-
-    @Provides
-    @Singleton
-    fun provideFirebaseAnalytics(@ApplicationContext context: Context): FirebaseAnalytics =
-        FirebaseAnalytics.getInstance(context)
-
-    @Provides
-    @Singleton
-    fun provideFirebaseCrashlytics(): FirebaseCrashlytics = FirebaseCrashlytics.getInstance()
-
-    @Provides
-    @Singleton
-    fun provideFirebaseMessaging(): FirebaseMessaging = FirebaseMessaging.getInstance()
-
-    @Provides
-    @Singleton
-    fun provideFirebaseRemoteConfig(): FirebaseRemoteConfig = FirebaseRemoteConfig.getInstance()
-
-    @Provides
-    @Singleton
-    fun provideFirebasePerformance(): FirebasePerformance = FirebasePerformance.getInstance()
+val firebaseModule = module {
+    single { FirebaseAuth.getInstance() }
+    single { FirebaseFirestore.getInstance() }
+    single { FirebaseStorage.getInstance() }
+    single { FirebaseAnalytics.getInstance(androidContext()) }
+    single { FirebaseCrashlytics.getInstance() }
+    single { FirebaseMessaging.getInstance() }
+    single { FirebaseRemoteConfig.getInstance() }
+    single { FirebasePerformance.getInstance() }
 }

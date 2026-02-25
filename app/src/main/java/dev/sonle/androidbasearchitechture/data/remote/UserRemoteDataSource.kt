@@ -6,14 +6,10 @@ import dev.sonle.androidbasearchitechture.data.model.UserDto
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import timber.log.Timber
-import javax.inject.Inject
-import javax.inject.Singleton
-
 /**
  * Remote data source for User operations using Retrofit
  */
-@Singleton
-class UserRemoteDataSource @Inject constructor(
+class UserRemoteDataSource(
     private val apiService: ApiService
 ) {
     

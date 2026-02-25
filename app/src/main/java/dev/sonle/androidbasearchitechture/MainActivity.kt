@@ -14,7 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
-import dagger.hilt.android.AndroidEntryPoint
+// removed hilt
 import dev.sonle.androidbasearchitechture.core.config.EnvironmentConfig
 import dev.sonle.androidbasearchitechture.ui.navigation.AppNavigation
 import dev.sonle.androidbasearchitechture.ui.theme.AndroidBaseArchitechtureTheme
@@ -23,7 +23,6 @@ import timber.log.Timber
 /**
  * Main Activity with Navigation Compose and Hilt dependency injection
  */
-@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     
     override fun onCreate(savedInstanceState: Bundle?) {

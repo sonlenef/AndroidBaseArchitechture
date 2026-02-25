@@ -1,15 +1,13 @@
 package dev.sonle.androidbasearchitechture.data.local
 
 import dev.sonle.androidbasearchitechture.data.model.UserEntity
+
 import kotlinx.coroutines.flow.Flow
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Local data source for User operations using Room
  */
-@Singleton
-class UserLocalDataSource @Inject constructor(
+class UserLocalDataSource(
     private val userDao: UserDao
 ) {
     

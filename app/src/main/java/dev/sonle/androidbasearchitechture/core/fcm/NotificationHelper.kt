@@ -7,19 +7,15 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.sonle.androidbasearchitechture.MainActivity
 import dev.sonle.androidbasearchitechture.R
 import timber.log.Timber
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Helper class for creating and showing notifications
  */
-@Singleton
-class NotificationHelper @Inject constructor(
-    @ApplicationContext private val context: Context
+class NotificationHelper(
+    private val context: Context
 ) {
     
     companion object {

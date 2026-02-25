@@ -42,7 +42,7 @@ import dev.sonle.androidbasearchitechture.domain.model.User
 import dev.sonle.androidbasearchitechture.ui.components.ErrorView
 import dev.sonle.androidbasearchitechture.ui.components.LoadingIndicator
 import dev.sonle.androidbasearchitechture.util.ResponsiveUtils
-import androidx.hilt.navigation.compose.hiltViewModel
+import org.koin.androidx.compose.koinViewModel
 
 /**
  * UserList screen implementation
@@ -50,7 +50,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserListScreen() {
-    val viewModel: UserListViewModel = hiltViewModel()
+    val viewModel: UserListViewModel = koinViewModel()
     val uiState by viewModel.uiState.collectAsState()
     val users by viewModel.users.collectAsState()
     

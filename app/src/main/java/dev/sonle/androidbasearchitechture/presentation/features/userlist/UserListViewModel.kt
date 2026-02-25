@@ -2,7 +2,7 @@ package dev.sonle.androidbasearchitechture.ui.features.userlist
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dagger.hilt.android.lifecycle.HiltViewModel
+
 import dev.sonle.androidbasearchitechture.core.network.NetworkResult
 import dev.sonle.androidbasearchitechture.domain.model.User
 import dev.sonle.androidbasearchitechture.domain.navigation.NavigationRoutes
@@ -14,13 +14,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
+
 
 /**
  * ViewModel for UserList screen
  */
-@HiltViewModel
-class UserListViewModel @Inject constructor(
+class UserListViewModel(
     private val getUsersUseCase: GetUsersUseCase,
     private val refreshUsersUseCase: RefreshUsersUseCase,
     private val updateFavoriteStatusUseCase: UpdateFavoriteStatusUseCase

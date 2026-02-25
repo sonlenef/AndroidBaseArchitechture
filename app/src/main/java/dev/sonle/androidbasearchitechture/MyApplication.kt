@@ -5,7 +5,16 @@ import android.os.StrictMode
 import com.google.firebase.FirebaseApp
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.perf.FirebasePerformance
-import dagger.hilt.android.HiltAndroidApp
+import org.koin.android.ext.android.inject
+import org.koin.android.ext.koin.androidContext
+import org.koin.core.context.startKoin
+import dev.sonle.androidbasearchitechture.core.di.appModule
+import dev.sonle.androidbasearchitechture.core.di.databaseModule
+import dev.sonle.androidbasearchitechture.core.di.dispatcherModule
+import dev.sonle.androidbasearchitechture.core.di.firebaseModule
+import dev.sonle.androidbasearchitechture.core.di.navigationModule
+import dev.sonle.androidbasearchitechture.core.di.networkModule
+import dev.sonle.androidbasearchitechture.core.di.repositoryModule
 import dev.sonle.androidbasearchitechture.core.analytics.AnalyticsManager
 import dev.sonle.androidbasearchitechture.core.config.EnvironmentConfig
 import dev.sonle.androidbasearchitechture.core.config.RemoteConfigManager
@@ -15,27 +24,32 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import javax.inject.Inject
+// no inject
 
-/**
- * Application class with Hilt dependency injection and Firebase initialization
- */
-@HiltAndroidApp
 class MyApplication : Application() {
     
-    @Inject
-    lateinit var analyticsManager: AnalyticsManager
-    
-    @Inject
-    lateinit var crashlyticsManager: CrashlyticsManager
-    
-    @Inject
-    lateinit var remoteConfigManager: RemoteConfigManager
+    val analyticsManager: AnalyticsManager by inject()
+    val crashlyticsManager: CrashlyticsManager by inject()
+    val remoteConfigManager: RemoteConfigManager by inject()
     
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     
     override fun onCreate() {
         super.onCreate()
+        
+        // Initialize Koin
+        startKoin {
+            androidContext(this@MyApplication)
+            modules(
+                appModule,
+                databaseModule,
+                dispatcherModule,
+                firebaseModule,
+                navigationModule,
+                networkModule,
+                repositoryModule
+            )
+        }
         
         // Initialize Firebase
         FirebaseApp.initializeApp(this)
