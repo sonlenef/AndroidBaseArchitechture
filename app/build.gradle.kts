@@ -10,11 +10,11 @@ plugins {
 }
 
 android {
-    namespace = "dev.sonle.androidbasearchitechture"
+    namespace = "dev.sonle.androidbasearchitecture"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "dev.sonle.androidbasearchitechture"
+        applicationId = "dev.sonle.androidbasearchitecture"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
@@ -191,4 +191,7 @@ dependencies {
 // KSP configuration
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
+}
+dependencies {
+    implementation(libs.kotlinx.serialization.json)
 }

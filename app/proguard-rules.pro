@@ -49,11 +49,11 @@
 -keep class timber.log.** { *; }
 
 # Keep data classes
--keep class dev.sonle.androidbasearchitechture.data.model.** { *; }
--keep class dev.sonle.androidbasearchitechture.domain.model.** { *; }
+-keep class dev.sonle.androidbasearchitecture.data.model.** { *; }
+-keep class dev.sonle.androidbasearchitecture.domain.model.** { *; }
 
 # Keep ViewModels
--keep class dev.sonle.androidbasearchitechture.presentation.features.**.ViewModel { *; }
+-keep class dev.sonle.androidbasearchitecture.presentation.features.**.ViewModel { *; }
 
 # Keep serializable classes
 -keepclassmembers class * implements java.io.Serializable {

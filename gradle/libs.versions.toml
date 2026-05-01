@@ -105,6 +105,8 @@ arch-core-testing = { group = "androidx.arch.core", name = "core-testing", versi
 # Other
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
 
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version = "1.7.3" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
@@ -115,4 +117,3 @@ firebase-crashlytics = { id = "com.google.firebase.crashlytics", version = "3.0.
 firebase-pref = { id = "com.google.firebase.firebase-perf", version = "2.0.1" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-

@@ -1,17 +1,17 @@
 # Android Base Architecture
 
-A production-ready Android application built with Clean Architecture, MVVM pattern, and modern Android development practices.
+A production-ready Android application built with Clean Architecture, MVI/MVVM pattern, and modern 2026 Android development practices.
 
 ## 🚀 Features
 
 - **Clean Architecture** with clear separation of concerns
-- **MVVM Pattern** with Jetpack Compose UI
+- **MVI Architecture** (Model-View-Intent) for predictable state management
 - **Material 3 Design** with responsive layouts
 - **Multi-Environment Support** (dev/staging/prod)
 - **Firebase Integration** (Auth, Firestore, Storage, Analytics, Crashlytics, FCM, Performance, Remote Config)
 - **Offline-First** data strategy with Room database
 - **Dependency Injection** with Koin
-- **Navigation** with Navigation Compose
+- **Type-Safe Navigation** with Navigation Compose 2.8+ and Kotlin Serialization
 - **Comprehensive Testing** (Unit + UI tests)
 - **CI/CD Ready** with GitHub Actions
 
@@ -22,7 +22,7 @@ This project follows **Clean Architecture** principles with the following layers
 ```text
 ┌─────────────────────────────────────────┐
 │              Presentation               │
-│  (UI Components, ViewModels, Screens)   │
+│  (UI, ViewModels, States, Actions)      │
 ├─────────────────────────────────────────┤
 │               Domain                    │
 │     (Use Cases, Models, Interfaces)     │
@@ -34,7 +34,7 @@ This project follows **Clean Architecture** principles with the following layers
 
 ### Key Components
 
-- **Presentation Layer**: Jetpack Compose UI with ViewModels
+- **Presentation Layer**: Jetpack Compose UI with ViewModels (MVI approach)
 - **Domain Layer**: Business logic and use cases
 - **Data Layer**: Repository pattern with Room + Retrofit
 - **Core Layer**: Utilities, DI modules, and shared components
@@ -46,7 +46,8 @@ This project follows **Clean Architecture** principles with the following layers
 - **Jetpack Compose** - Modern UI toolkit
 - **Material 3** - Design system
 - **Koin** - Dependency injection
-- **Navigation Compose** - Jetpack Navigation for Compose
+- **Navigation Compose** - Type-safe routing
+- **Kotlinx Serialization** - Type-safe data objects
 
 ### Data & Network
 - **Room** - Local database
@@ -162,7 +163,7 @@ The project supports multiple build variants:
 ## 🏗️ Project Structure
 
 ```text
-app/src/main/java/dev/sonle/androidbasearchitechture/
+app/src/main/java/dev/sonle/androidbasearchitecture/
 ├── core/                          # Core functionality
 │   ├── analytics/                 # Analytics management
 │   ├── config/                    # Configuration
