@@ -8,9 +8,9 @@ A production-ready Android application built with Clean Architecture, MVVM patte
 - **MVVM Pattern** with Jetpack Compose UI
 - **Material 3 Design** with responsive layouts
 - **Multi-Environment Support** (dev/staging/prod)
-- **Firebase Integration** (Auth, Firestore, Analytics, Crashlytics, FCM, Performance)
+- **Firebase Integration** (Auth, Firestore, Storage, Analytics, Crashlytics, FCM, Performance, Remote Config)
 - **Offline-First** data strategy with Room database
-- **Dependency Injection** with Hilt
+- **Dependency Injection** with Koin
 - **Navigation** with Navigation Compose
 - **Comprehensive Testing** (Unit + UI tests)
 - **CI/CD Ready** with GitHub Actions
@@ -19,16 +19,16 @@ A production-ready Android application built with Clean Architecture, MVVM patte
 
 This project follows **Clean Architecture** principles with the following layers:
 
-```
+```text
 ┌─────────────────────────────────────────┐
 │              Presentation               │
-│  (UI Components, ViewModels, Screens)  │
+│  (UI Components, ViewModels, Screens)   │
 ├─────────────────────────────────────────┤
 │               Domain                    │
-│     (Use Cases, Models, Interfaces)    │
+│     (Use Cases, Models, Interfaces)     │
 ├─────────────────────────────────────────┤
 │                Data                     │
-│  (Repositories, Data Sources, DTOs)    │
+│  (Repositories, Data Sources, DTOs)     │
 └─────────────────────────────────────────┘
 ```
 
@@ -45,7 +45,7 @@ This project follows **Clean Architecture** principles with the following layers
 - **Kotlin** - Programming language
 - **Jetpack Compose** - Modern UI toolkit
 - **Material 3** - Design system
-- **Hilt** - Dependency injection
+- **Koin** - Dependency injection
 - **Navigation Compose** - Jetpack Navigation for Compose
 
 ### Data & Network
@@ -55,8 +55,10 @@ This project follows **Clean Architecture** principles with the following layers
 - **Kotlin Coroutines** - Asynchronous programming
 
 ### Firebase Services
+*(See [FIREBASE.md](FIREBASE.md) for detailed integration information)*
 - **Authentication** - User management
 - **Firestore** - Cloud database
+- **Storage** - File storage and management
 - **Analytics** - User behavior tracking
 - **Crashlytics** - Crash reporting
 - **Cloud Messaging** - Push notifications
@@ -68,21 +70,21 @@ This project follows **Clean Architecture** principles with the following layers
 - **MockK** - Mocking framework
 - **Turbine** - Flow testing
 - **Compose Test** - UI testing
-- **Hilt Testing** - DI testing
+- **Koin Testing** - DI testing
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- Android Studio Hedgehog or later
+- Android Studio Ladybug or later
 - JDK 11 or later
-- Android SDK 24+ (Android 7.0)
+- Android SDK 36 (Minimum API 24)
 
 ### Installation
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/AndroidBaseArchitechture.git
+   git clone https://github.com/sonlenef/AndroidBaseArchitechture.git
    cd AndroidBaseArchitechture
    ```
 
@@ -148,9 +150,6 @@ The project supports multiple build variants:
 
 # Run tests for specific variant
 ./gradlew testDevDebugUnitTest
-
-# Generate test coverage report
-./gradlew jacocoTestReport
 ```
 
 ### Test Coverage
@@ -162,12 +161,12 @@ The project supports multiple build variants:
 
 ## 🏗️ Project Structure
 
-```
+```text
 app/src/main/java/dev/sonle/androidbasearchitechture/
 ├── core/                          # Core functionality
 │   ├── analytics/                 # Analytics management
 │   ├── config/                    # Configuration
-│   ├── crashlytics/              # Crash reporting
+│   ├── crashlytics/               # Crash reporting
 │   ├── database/                  # Room database
 │   ├── di/                        # Dependency injection
 │   ├── fcm/                       # Firebase Cloud Messaging
@@ -175,17 +174,25 @@ app/src/main/java/dev/sonle/androidbasearchitechture/
 │   ├── performance/               # Performance monitoring
 │   └── util/                      # Utility classes
 ├── data/                          # Data layer
+│   ├── auth/                      # Authentication
+│   ├── firestore/                 # Firestore operations
 │   ├── local/                     # Local data sources
-│   ├── remote/                    # Remote data sources
 │   ├── mapper/                    # Data mappers
-│   └── repository/                # Repository implementations
+│   ├── model/                     # Data models
+│   ├── remote/                    # Remote data sources
+│   ├── repository/                # Repository implementations
+│   └── storage/                   # Storage operations
 ├── domain/                        # Domain layer
 │   ├── model/                     # Domain models
+│   ├── navigation/                # Navigation paths
 │   ├── repository/                # Repository interfaces
 │   └── usecase/                   # Use cases
 └── presentation/                  # Presentation layer
     ├── components/                # Reusable UI components
     ├── features/                  # Feature modules
+    │   ├── login/                 # Login feature
+    │   ├── profile/               # Profile feature
+    │   └── userlist/              # User list feature
     ├── navigation/                # Navigation
     ├── theme/                     # Theme and styling
     └── util/                      # Presentation utilities
@@ -194,6 +201,7 @@ app/src/main/java/dev/sonle/androidbasearchitechture/
 ## 🔧 Configuration
 
 ### Environment Configuration
+*(See [ENVIRONMENT_SETUP.md](ENVIRONMENT_SETUP.md) for detailed environment configuration)*
 
 The app supports multiple environments through build flavors:
 
@@ -286,7 +294,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 If you have any questions or need help, please:
 
-1. Check the [Issues](https://github.com/yourusername/AndroidBaseArchitechture/issues) page
+1. Check the [Issues](https://github.com/sonle/AndroidBaseArchitechture/issues) page
 2. Create a new issue if your question isn't answered
 3. Contact the maintainers
 

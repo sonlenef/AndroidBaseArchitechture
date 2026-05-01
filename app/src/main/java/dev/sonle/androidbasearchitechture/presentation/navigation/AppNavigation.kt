@@ -21,7 +21,7 @@ import dev.sonle.androidbasearchitechture.ui.features.profile.ProfileScreen
 fun AppNavigation(navController: NavHostController = rememberNavController()) {
     // Provide Navigator to the composition
     val navigator = rememberNavigator(navController)
-    
+
     // Set navigator in manager for ViewModels to access
     NavigatorManager.setNavigator(navigator)
     
