@@ -33,6 +33,8 @@ mockk = "1.13.8"
 turbine = "1.0.0"
 archCore = "2.2.0"
 composeTest = "1.7.4"
+camerax = "1.4.1"
+opencv = "4.10.0"
 
 # Other
 timber = "5.0.1"
@@ -104,6 +106,16 @@ arch-core-testing = { group = "androidx.arch.core", name = "core-testing", versi
 
 # Other
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
+
+# CameraX
+androidx-camera-core = { group = "androidx.camera", name = "camera-core", version.ref = "camerax" }
+androidx-camera-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "camerax" }
+androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "camerax" }
+androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "camerax" }
+androidx-camera-extensions = { group = "androidx.camera", name = "camera-extensions", version.ref = "camerax" }
+
+# OpenCV
+opencv-android = { group = "org.opencv", name = "opencv", version.ref = "opencv" }
 
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version = "1.7.3" }
 

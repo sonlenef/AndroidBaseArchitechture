@@ -10,11 +10,11 @@ plugins {
 }
 
 android {
-    namespace = "dev.sonle.androidbasearchitecture"
+    namespace = "dev.sonle.pdfscanner"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "dev.sonle.androidbasearchitecture"
+        applicationId = "dev.sonle.pdfscanner"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
@@ -33,7 +33,7 @@ android {
             dimension = "environment"
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
-            resValue("string", "app_name", "BaseApp Dev")
+            resValue("string", "app_name", "PDF Scanner Dev")
             buildConfigField("String", "API_BASE_URL", "\"https://jsonplaceholder.typicode.com/\"")
             buildConfigField("String", "ENVIRONMENT", "\"development\"")
             buildConfigField("int", "API_TIMEOUT_SECONDS", "30")
@@ -49,7 +49,7 @@ android {
             dimension = "environment"
             applicationIdSuffix = ".staging"
             versionNameSuffix = "-staging"
-            resValue("string", "app_name", "BaseApp Staging")
+            resValue("string", "app_name", "PDF Scanner Staging")
             buildConfigField("String", "API_BASE_URL", "\"https://staging-api.example.com/\"")
             buildConfigField("String", "ENVIRONMENT", "\"staging\"")
             buildConfigField("int", "API_TIMEOUT_SECONDS", "15")
@@ -63,7 +63,7 @@ android {
         
         create("prod") {
             dimension = "environment"
-            resValue("string", "app_name", "BaseApp")
+            resValue("string", "app_name", "PDF Scanner")
             buildConfigField("String", "API_BASE_URL", "\"https://api.example.com/\"")
             buildConfigField("String", "ENVIRONMENT", "\"production\"")
             buildConfigField("int", "API_TIMEOUT_SECONDS", "10")
@@ -167,6 +167,16 @@ dependencies {
 
     // Other
     implementation(libs.timber)
+
+    // CameraX
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.view)
+    implementation(libs.androidx.camera.extensions)
+
+    // OpenCV
+    implementation(libs.opencv.android)
 
     // Testing
     testImplementation(libs.junit)

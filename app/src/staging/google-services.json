@@ -9,7 +9,7 @@
             "client_info": {
                 "mobilesdk_app_id": "1:987654321:android:fedcba654321",
                 "android_client_info": {
-                    "package_name": "dev.sonle.androidbasearchitecture.staging"
+                    "package_name": "dev.sonle.pdfscanner.staging"
                 }
             },
             "oauth_client": [],

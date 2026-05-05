@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">BaseApp</string>
+    <string name="app_name">PDF Scanner</string>
     
     <!-- Login Screen -->
     <string name="login_title">Welcome Back</string>
