@@ -31,7 +31,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
     CompositionLocalProvider(LocalNavigator provides navigator) {
         NavHost(
             navController = navController,
-            startDestination = LoginScreenRoute
+            startDestination = UserListScreenRoute
         ) {
             composable<LoginScreenRoute> {
                 LoginScreen()

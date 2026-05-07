@@ -62,4 +62,15 @@
     <!-- Loading -->
     <string name="loading">Loading...</string>
     <string name="saving">Saving...</string>
+
+    <!-- Scanner Screen -->
+    <string name="scanner_action_scan">SCAN</string>
+    <string name="scanner_processing">Đang xử lý tài liệu...</string>
+    <string name="scanner_saved_file_label">Đã lưu file tại:</string>
+    <string name="scanner_continue_scan">Tiếp tục quét</string>
+    <string name="scanner_error_prefix">Lỗi: %1$s</string>
+    <string name="scanner_camera_permission_required">Cần quyền Camera để tiếp tục.</string>
+    <string name="scanner_frame_auto_hint">Đang tự động nhận diện viền tài liệu</string>
+    <string name="scanner_capture_again">Chụp lại</string>
+    <string name="scanner_save_pdf">Lưu PDF</string>
 </resources>

@@ -15,6 +15,7 @@ import dev.sonle.pdfscanner.core.di.firebaseModule
 import dev.sonle.pdfscanner.core.di.navigationModule
 import dev.sonle.pdfscanner.core.di.networkModule
 import dev.sonle.pdfscanner.core.di.repositoryModule
+import dev.sonle.pdfscanner.core.di.scannerModule
 import dev.sonle.pdfscanner.core.analytics.AnalyticsManager
 import dev.sonle.pdfscanner.core.config.EnvironmentConfig
 import dev.sonle.pdfscanner.core.config.RemoteConfigManager
@@ -48,7 +49,8 @@ class MyApplication : Application() {
                 firebaseModule,
                 navigationModule,
                 networkModule,
-                repositoryModule
+                repositoryModule,
+                scannerModule
             )
         }
         

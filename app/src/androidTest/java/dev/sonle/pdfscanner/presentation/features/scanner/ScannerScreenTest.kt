@@ -1,10 +1,11 @@
 package dev.sonle.pdfscanner.presentation.features.scanner
 
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.mockk.mockk
+import dev.sonle.pdfscanner.core.scanner.model.DocumentQuad
+import dev.sonle.pdfscanner.core.scanner.model.NormalizedPoint
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -16,17 +17,19 @@ class ScannerScreenTest {
     val composeTestRule = createComposeRule()
 
     @Test
-    fun scannerScreen_displaysScanButton_whenIdle() {
-        val mockViewModel = mockk<ScannerViewModel>(relaxed = true)
-        
+    fun documentDetectionOverlay_displaysOverlay_whenDocumentCornersDetected() {
         composeTestRule.setContent {
-            ScannerScreen(
-                viewModel = mockViewModel,
-                onNavigateBack = {}
+            DocumentDetectionOverlay(
+                quad = DocumentQuad(
+                    tl = NormalizedPoint(0.2f, 0.2f),
+                    tr = NormalizedPoint(0.8f, 0.2f),
+                    br = NormalizedPoint(0.8f, 0.9f),
+                    bl = NormalizedPoint(0.2f, 0.9f),
+                    confidence = 0.9f
+                )
             )
         }
 
-        // Kiểm tra xem nút SCAN có hiển thị không
-        composeTestRule.onNodeWithText("SCAN").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("pdfDetectionOverlay").assertIsDisplayed()
     }
 }

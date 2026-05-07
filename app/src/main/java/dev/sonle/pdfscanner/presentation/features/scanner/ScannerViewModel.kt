@@ -4,11 +4,13 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.sonle.pdfscanner.core.scanner.model.DocumentQuad
 import dev.sonle.pdfscanner.core.util.OpenCVScanner
 import dev.sonle.pdfscanner.domain.usecase.SavePdfUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.io.File
@@ -21,6 +23,12 @@ sealed class ScannerUiState {
     data class SaveSuccess(val file: File) : ScannerUiState()
 }
 
+data class DetectionUiState(
+    val quad: DocumentQuad? = null,
+    val stabilityProgress: Float = 0f,
+    val isStable: Boolean = false
+)
+
 class ScannerViewModel(
     private val savePdfUseCase: SavePdfUseCase
 ) : ViewModel() {
@@ -28,7 +36,11 @@ class ScannerViewModel(
     private val _uiState = MutableStateFlow<ScannerUiState>(ScannerUiState.Idle)
     val uiState: StateFlow<ScannerUiState> = _uiState.asStateFlow()
 
+    private val _detection = MutableStateFlow(DetectionUiState())
+    val detection: StateFlow<DetectionUiState> = _detection.asStateFlow()
+
     private var currentBitmap: Bitmap? = null
+    private var autoCaptureArmed = true
 
     fun processCapturedImage(file: File) {
         viewModelScope.launch {
@@ -77,5 +89,28 @@ class ScannerViewModel(
     fun reset() {
         currentBitmap = null
         _uiState.value = ScannerUiState.Idle
+        _detection.value = DetectionUiState()
+        autoCaptureArmed = true
+    }
+
+    fun onDetectionUpdated(
+        quad: DocumentQuad?,
+        stabilityProgress: Float,
+        isStable: Boolean
+    ) {
+        _detection.update {
+            it.copy(
+                quad = quad,
+                stabilityProgress = stabilityProgress,
+                isStable = isStable
+            )
+        }
+    }
+
+    fun shouldAutoCapture(): Boolean {
+        if (_uiState.value !is ScannerUiState.Idle) return false
+        if (!_detection.value.isStable || !autoCaptureArmed) return false
+        autoCaptureArmed = false
+        return true
     }
 }

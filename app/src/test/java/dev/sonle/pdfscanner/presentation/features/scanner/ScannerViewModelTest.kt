@@ -14,6 +14,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -23,6 +24,8 @@ import android.graphics.BitmapFactory
 import dev.sonle.pdfscanner.core.util.OpenCVScanner
 import dev.sonle.pdfscanner.domain.usecase.SavePdfUseCase
 import io.mockk.coEvery
+import dev.sonle.pdfscanner.core.scanner.model.DocumentQuad
+import dev.sonle.pdfscanner.core.scanner.model.NormalizedPoint
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ScannerViewModelTest {
@@ -118,5 +121,20 @@ class ScannerViewModelTest {
             val saveSuccessState = awaitItem() as ScannerUiState.SaveSuccess
             assertEquals(outputPdfFile, saveSuccessState.file)
         }
+    }
+
+    @Test
+    fun `shouldAutoCapture should return true once when stable`() {
+        val quad = DocumentQuad(
+            tl = NormalizedPoint(0.1f, 0.1f),
+            tr = NormalizedPoint(0.9f, 0.1f),
+            br = NormalizedPoint(0.9f, 0.9f),
+            bl = NormalizedPoint(0.1f, 0.9f),
+            confidence = 0.9f
+        )
+        viewModel.onDetectionUpdated(quad, 1f, true)
+
+        assertTrue(viewModel.shouldAutoCapture())
+        assertFalse(viewModel.shouldAutoCapture())
     }
 }

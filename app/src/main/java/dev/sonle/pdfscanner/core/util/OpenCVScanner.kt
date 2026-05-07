@@ -12,6 +12,9 @@ object OpenCVScanner {
     /**
      * Tìm 4 điểm góc của tài liệu trong ảnh.
      */
+    @Deprecated(
+        message = "Use TFLiteDocumentDetector realtime pipeline for live preview detection"
+    )
     fun findDocumentCorners(bitmap: Bitmap): List<Point>? {
         val mat = Mat()
         Utils.bitmapToMat(bitmap, mat)
