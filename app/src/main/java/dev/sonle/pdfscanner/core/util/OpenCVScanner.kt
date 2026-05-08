@@ -38,6 +38,11 @@ object OpenCVScanner {
         // Sắp xếp contours theo diện tích giảm dần
         contours.sortByDescending { Imgproc.contourArea(it) }
 
+        val imageArea = bitmap.width.toDouble() * bitmap.height.toDouble()
+        val minQuadArea = imageArea * 0.05 // ignore tiny quads/noise (less than 5% of image)
+        var bestQuad: List<Point>? = null
+        var bestArea = 0.0
+
         for (contour in contours) {
             val peri = Imgproc.arcLength(MatOfPoint2f(*contour.toArray()), true)
             val approx = MatOfPoint2f()
@@ -45,10 +50,30 @@ object OpenCVScanner {
 
             // Nếu contour có 4 cạnh, khả năng cao là tài liệu
             if (approx.total() == 4L) {
-                return approx.toList()
+                val quad = approx.toList()
+                val area = kotlin.math.abs(Imgproc.contourArea(MatOfPoint(*approx.toArray())))
+                if (area >= minQuadArea && area > bestArea) {
+                    bestQuad = quad
+                    bestArea = area
+                }
             }
         }
-        return null
+        if (bestQuad != null) {
+            return bestQuad
+        }
+
+        // Fallback: derive 4 corners from the largest contour's min-area rectangle.
+        val largestContour = contours.maxByOrNull { Imgproc.contourArea(it) } ?: return null
+        val largestArea = kotlin.math.abs(Imgproc.contourArea(largestContour))
+        if (largestArea < imageArea * 0.08) {
+            return null
+        }
+
+        val contour2f = MatOfPoint2f(*largestContour.toArray())
+        val rect = Imgproc.minAreaRect(contour2f)
+        val rectPoints = arrayOfNulls<Point>(4)
+        rect.points(rectPoints)
+        return rectPoints.filterNotNull()
     }
 
     /**

@@ -7,22 +7,29 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Home
-import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -30,9 +37,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.github.yohannestz.iconsax_compose.iconsax.Iconsax
 import dev.sonle.pdfscanner.R
 import dev.sonle.pdfscanner.presentation.features.main.home.HomeScreen
 import dev.sonle.pdfscanner.presentation.features.main.settings.SettingsScreen
@@ -44,53 +54,19 @@ fun MainScreen(
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf(
-        stringResource(R.string.main_tab_home) to Icons.Rounded.Home,
-        stringResource(R.string.main_tab_settings) to Icons.Rounded.Settings
+        stringResource(R.string.main_tab_home) to Iconsax.Linear.Home,
+        stringResource(R.string.main_tab_settings) to Iconsax.Linear.Setting
     )
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onOpenScanner,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                shape = MaterialTheme.shapes.large
-            ) {
-                Row(modifier = Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Rounded.Add, contentDescription = "Scan")
-                    Text(
-                        text = stringResource(R.string.main_scan_button),
-                        modifier = Modifier.padding(start = 8.dp),
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
-        },
-        floatingActionButtonPosition = androidx.compose.material3.FabPosition.Center,
         bottomBar = {
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surface,
-                tonalElevation = 8.dp
-            ) {
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    NavigationBarItem(
-                        selected = selectedTab == 0,
-                        onClick = { selectedTab = 0 },
-                        icon = { Icon(tabs[0].second, contentDescription = tabs[0].first) },
-                        label = { Text(tabs[0].first, fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Normal) },
-                        modifier = Modifier.weight(1f)
-                    )
-                    Box(modifier = Modifier.weight(1f))
-                    NavigationBarItem(
-                        selected = selectedTab == 1,
-                        onClick = { selectedTab = 1 },
-                        icon = { Icon(tabs[1].second, contentDescription = tabs[1].first) },
-                        label = { Text(tabs[1].first, fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal) },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
+            CustomBottomNavigationBar(
+                selectedTab = selectedTab,
+                onTabSelected = { selectedTab = it },
+                onOpenScanner = onOpenScanner,
+                tabs = tabs
+            )
         }
     ) { innerPadding ->
         AnimatedContent(
@@ -106,9 +82,118 @@ fun MainScreen(
             label = "tab_animation"
         ) { targetTab ->
             when (targetTab) {
-                0 -> HomeScreen()
+                0 -> HomeScreen(onOpenScanner = onOpenScanner)
                 else -> SettingsScreen()
             }
+        }
+    }
+}
+
+@Composable
+private fun CustomBottomNavigationBar(
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit,
+    onOpenScanner: () -> Unit,
+    tabs: List<Pair<String, ImageVector>>
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 16.dp, start = 16.dp, end = 16.dp),
+        contentAlignment = Alignment.BottomCenter
+    ) {
+        // Bar Background
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(72.dp)
+                .clip(RoundedCornerShape(36.dp))
+                .background(MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp))
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Home Tab
+            CustomNavItem(
+                selected = selectedTab == 0,
+                onClick = { onTabSelected(0) },
+                icon = tabs[0].second,
+                label = tabs[0].first,
+                modifier = Modifier.weight(1f)
+            )
+
+            // Space for Center FAB
+            Spacer(modifier = Modifier.weight(1f))
+
+            // Settings Tab
+            CustomNavItem(
+                selected = selectedTab == 1,
+                onClick = { onTabSelected(1) },
+                icon = tabs[1].second,
+                label = tabs[1].first,
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        // Center FAB
+        FloatingActionButton(
+            onClick = onOpenScanner,
+            modifier = Modifier
+                .offset(y = (-20).dp)
+                .size(72.dp),
+            shape = CircleShape,
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            elevation = FloatingActionButtonDefaults.elevation(
+                defaultElevation = 8.dp,
+                pressedElevation = 12.dp
+            )
+        ) {
+            Icon(
+                imageVector = Iconsax.Linear.Add,
+                contentDescription = stringResource(R.string.main_scan_button),
+                modifier = Modifier.size(36.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun CustomNavItem(
+    selected: Boolean,
+    onClick: () -> Unit,
+    icon: ImageVector,
+    label: String,
+    modifier: Modifier = Modifier
+) {
+    val selectedColor = MaterialTheme.colorScheme.primary
+    val unselectedColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+    val contentColor = if (selected) selectedColor else unselectedColor
+
+    Box(
+        modifier = modifier
+            .fillMaxHeight()
+            .clip(RoundedCornerShape(24.dp))
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = contentColor,
+                modifier = Modifier.size(26.dp)
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = contentColor,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
+            )
         }
     }
 }

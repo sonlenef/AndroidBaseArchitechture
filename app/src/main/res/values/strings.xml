@@ -65,14 +65,53 @@
 
     <!-- Scanner Screen -->
     <string name="scanner_action_scan">SCAN</string>
-    <string name="scanner_processing">Đang xử lý tài liệu...</string>
+    <string name="scanner_processing">Đang xử lý tài liệu…</string>
     <string name="scanner_saved_file_label">Đã lưu file tại:</string>
     <string name="scanner_continue_scan">Tiếp tục quét</string>
+    <string name="scanner_back_home">Về trang chủ</string>
     <string name="scanner_error_prefix">Lỗi: %1$s</string>
     <string name="scanner_camera_permission_required">Cần quyền Camera để tiếp tục.</string>
-    <string name="scanner_frame_auto_hint">Đang tự động nhận diện viền tài liệu</string>
     <string name="scanner_capture_again">Chụp lại</string>
     <string name="scanner_save_pdf">Lưu PDF</string>
+
+    <!-- Scanner Mode -->
+    <string name="scanner_mode_auto">Tự động</string>
+    <string name="scanner_mode_manual">Thủ công</string>
+    <string name="scanner_mode_single">Một trang</string>
+    <string name="scanner_mode_multi">Nhiều trang</string>
+    <string name="scanner_frame_auto_hint">Đang tự động nhận diện viền tài liệu</string>
+    <string name="scanner_frame_manual_hint">Hướng camera vào tài liệu và chạm để chụp</string>
+    <string name="scanner_page_count">%1$d trang đã quét</string>
+
+    <!-- Crop Editor -->
+    <string name="scanner_crop_title">Chỉnh sửa viền</string>
+    <string name="scanner_crop_hint">Kéo các góc để chỉnh vùng tài liệu</string>
+    <string name="scanner_crop_auto_detect">Tự động phát hiện</string>
+    <string name="scanner_crop_confirm">Tiếp tục</string>
+    <string name="scanner_crop_retake">Chụp lại</string>
+
+    <!-- Filter Editor -->
+    <string name="scanner_filter_title">Chọn bộ lọc</string>
+    <string name="scanner_filter_original">Gốc</string>
+    <string name="scanner_filter_bw">Đen trắng</string>
+    <string name="scanner_filter_grayscale">Xám</string>
+    <string name="scanner_filter_magic">Màu sắc</string>
+    <string name="scanner_filter_sharpen">Nét</string>
+    <string name="scanner_filter_confirm">Xong</string>
+
+    <!-- Rotation -->
+    <string name="scanner_rotate_left">Xoay trái</string>
+    <string name="scanner_rotate_right">Xoay phải</string>
+
+    <!-- Page Review -->
+    <string name="scanner_review_title">Xem lại</string>
+    <string name="scanner_review_add_more">Thêm trang</string>
+    <string name="scanner_review_edit">Chỉnh sửa</string>
+    <string name="scanner_review_delete">Xóa</string>
+    <string name="scanner_review_page_label">Trang %1$d / %2$d</string>
+
+    <!-- Close / Back -->
+    <string name="scanner_close">Đóng</string>
 
     <!-- Main Screen -->
     <string name="main_tab_home">Home</string>
@@ -82,6 +121,13 @@
     <string name="main_home_subtitle">Scan and manage your documents in one place.</string>
     <string name="main_quick_scan_title">Quick Scan</string>
     <string name="main_quick_scan_desc">Tap Scan to capture a document with automatic edge detection.</string>
+    <string name="main_recent_scans_title">Recent Scans</string>
+    <string name="main_recent_scans_empty">No recent scans yet</string>
+    <string name="main_recent_open">Open</string>
+    <string name="main_recent_delete">Delete</string>
+    <string name="main_recent_scan_meta">%1$s • %2$d pages • %3$s</string>
+    <string name="main_recent_size_zero">0 B</string>
+    <string name="main_recent_action_failed">Action failed. Please try again.</string>
     <string name="main_settings_title">Settings</string>
     <string name="main_settings_subtitle">Configure your scanning experience.</string>
     <string name="main_default_quality_title">Default Output</string>

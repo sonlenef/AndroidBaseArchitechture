@@ -37,6 +37,7 @@ camerax = "1.4.1"
 opencv = "4.10.0"
 litert = "1.4.0"
 litertSupport = "1.4.0"
+iconsaxCompose = "1.0.1"
 
 # Other
 timber = "5.0.1"
@@ -124,6 +125,7 @@ litert-support = { group = "com.google.ai.edge.litert", name = "litert-support",
 litert-metadata = { group = "com.google.ai.edge.litert", name = "litert-metadata", version.ref = "litertSupport" }
 
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version = "1.7.3" }
+iconsax-compose = { group = "io.github.yohannestz", name = "iconsax-compose", version.ref = "iconsaxCompose" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

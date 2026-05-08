@@ -2,160 +2,288 @@ package dev.sonle.pdfscanner.presentation.features.main.home
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.automirrored.rounded.List
+import com.github.yohannestz.iconsax_compose.iconsax.Iconsax
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import dev.sonle.pdfscanner.R
-import kotlinx.coroutines.delay
+import dev.sonle.pdfscanner.domain.model.RecentScan
+import org.koin.androidx.compose.koinViewModel
+import java.io.File
+import java.text.DateFormat
 
 @Composable
 fun HomeScreen(
+    onOpenScanner: () -> Unit,
+    viewModel: HomeViewModel = koinViewModel(),
     modifier: Modifier = Modifier
 ) {
-    // Simulate loading state for recent scans
-    var isLoading by remember { mutableStateOf(true) }
+    val context = LocalContext.current
+    val uiState by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(Unit) {
-        delay(1500) // fake delay
-        isLoading = false
-    }
-
-    LazyColumn(
+    Column(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 20.dp),
-        contentPadding = PaddingValues(top = 24.dp, bottom = 100.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+            .padding(horizontal = 24.dp)
+            .padding(top = 24.dp)
     ) {
-        item {
-            Column {
-                Text(
-                    text = stringResource(R.string.main_home_title),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
+        // Header
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "My Documents",
+                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Text(
+                text = "SELECT",
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Medium),
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.clickable { /* TODO */ }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Search Bar
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surface,
+            shadowElevation = 8.dp,
+            tonalElevation = 2.dp
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Search,
+                    contentDescription = "Search",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                 )
+                Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = stringResource(R.string.main_home_subtitle),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp)
+                    text = "Search",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                    style = MaterialTheme.typography.bodyLarge
                 )
             }
         }
 
-        item {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.primaryContainer,
-                tonalElevation = 0.dp
-            ) {
-                Row(
-                    modifier = Modifier.padding(20.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(56.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Add,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(28.dp)
-                        )
-                    }
-                    
-                    Spacer(modifier = Modifier.width(16.dp))
-                    
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = stringResource(R.string.main_quick_scan_title),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Text(
-                            text = stringResource(R.string.main_quick_scan_desc),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                    }
-                }
+        Spacer(modifier = Modifier.height(32.dp))
+
+        uiState.errorMessage?.let {
+            Text(
+                text = stringResource(R.string.main_recent_action_failed),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+            LaunchedEffect(it) {
+                viewModel.clearError()
             }
         }
-        
-        item {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = "Recent Scans",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-                
-                if (isLoading) {
-                    // Shimmer Placeholders
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        repeat(3) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(80.dp)
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .shimmerEffect()
-                            )
-                        }
-                    }
-                } else {
+
+        // Content
+        if (uiState.isLoading) {
+            // Shimmer Placeholders
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                repeat(3) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(200.dp)
-                            .clip(RoundedCornerShape(24.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.List,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                                modifier = Modifier.size(48.dp)
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "No recent scans yet",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                            )
-                        }
-                    }
+                            .height(80.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .shimmerEffect()
+                    )
+                }
+            }
+        } else if (uiState.recentScans.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(bottom = 80.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                EmptyDocsState()
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = 100.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(uiState.recentScans, key = { it.id }) { recentScan ->
+                    RecentScanItem(
+                        recentScan = recentScan,
+                        onOpen = { openRecentPdf(context, recentScan.filePath) },
+                        onDelete = { viewModel.deleteRecentScan(recentScan.id) }
+                    )
                 }
             }
         }
+    }
+}
+
+@Composable
+fun EmptyDocsState() {
+    val bgColor = MaterialTheme.colorScheme.background
+    val boxColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Icon Box
+        Icon(
+            imageVector = Iconsax.Bold.DirectboxDefault,
+            contentDescription = null,
+            modifier = Modifier
+                .size(160.dp)
+                .graphicsLayer(alpha = 0.99f)
+                .drawWithCache {
+                    val brush = Brush.verticalGradient(
+                        colors = listOf(boxColor, boxColor.copy(alpha = 0f)),
+                        startY = 0f,
+                        endY = size.height
+                    )
+                    onDrawWithContent {
+                        drawContent()
+                        drawRect(brush, blendMode = BlendMode.SrcIn)
+                    }
+                }
+        )
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        Text(
+            text = "No Docs",
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontWeight = FontWeight.Bold,
+                fontSize = 22.sp
+            ),
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Text(
+            text = "You have no documents here. Scan or\nyour docs using the plus button below.",
+            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 15.sp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+            textAlign = TextAlign.Center,
+            lineHeight = 22.sp
+        )
+    }
+}
+
+@Composable
+private fun RecentScanItem(
+    recentScan: RecentScan,
+    onOpen: () -> Unit,
+    onDelete: () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = recentScan.fileName,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = stringResource(
+                    R.string.main_recent_scan_meta,
+                    formatDate(recentScan.savedAt),
+                    recentScan.pageCount,
+                    formatFileSize(
+                        recentScan.fileSizeBytes,
+                        stringResource(R.string.main_recent_size_zero)
+                    )
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = stringResource(R.string.main_recent_open),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable(onClick = onOpen)
+                )
+                Text(
+                    text = stringResource(R.string.main_recent_delete),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.clickable(onClick = onDelete)
+                )
+            }
+        }
+    }
+}
+
+private fun formatDate(timestamp: Long): String {
+    return DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(timestamp)
+}
+
+private fun formatFileSize(bytes: Long, zeroLabel: String): String {
+    if (bytes <= 0) return zeroLabel
+    val kb = 1024.0
+    val mb = kb * 1024
+    return when {
+        bytes < kb -> "$bytes B"
+        bytes < mb -> String.format("%.1f KB", bytes / kb)
+        else -> String.format("%.1f MB", bytes / mb)
+    }
+}
+
+private fun openRecentPdf(context: android.content.Context, filePath: String) {
+    val file = File(filePath)
+    if (!file.exists()) return
+    val uri = FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.provider",
+        file
+    )
+    val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+        setDataAndType(uri, "application/pdf")
+        addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+    runCatching {
+        context.startActivity(intent)
     }
 }
 

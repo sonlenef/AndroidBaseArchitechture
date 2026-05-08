@@ -1,0 +1,91 @@
+{
+  "results": [
+    {
+      "step": "home_loaded",
+      "ok": true,
+      "note": "home screen rendered"
+    },
+    {
+      "step": "scanner_opened",
+      "ok": true,
+      "note": "camera screen visible"
+    },
+    {
+      "step": "single_review",
+      "ok": true,
+      "note": "single review with expected actions"
+    },
+    {
+      "step": "single_edit_opened",
+      "ok": true,
+      "note": "edit screen opened from review"
+    },
+    {
+      "step": "filter_editor_opened",
+      "ok": false,
+      "note": "filter editor opened with sharpen option visible"
+    },
+    {
+      "step": "single_review_after_filter",
+      "ok": true,
+      "note": "returned to review after filter"
+    },
+    {
+      "step": "single_save_success",
+      "ok": true,
+      "note": "save success dialog shown"
+    },
+    {
+      "step": "continue_scan_back_camera",
+      "ok": false,
+      "note": "continue scan returns to camera"
+    },
+    {
+      "step": "multi_review_page1",
+      "ok": false,
+      "note": "multi first page review"
+    },
+    {
+      "step": "multi_review_page2",
+      "ok": false,
+      "note": "multi second page and thumbnails"
+    },
+    {
+      "step": "delete_dialog_shown",
+      "ok": false,
+      "note": "delete confirmation dialog"
+    },
+    {
+      "step": "delete_page_success",
+      "ok": true,
+      "note": "page deleted and index updated"
+    },
+    {
+      "step": "multi_save_success",
+      "ok": true,
+      "note": "multi save success dialog"
+    },
+    {
+      "step": "back_home",
+      "ok": false,
+      "note": "returned to home"
+    },
+    {
+      "step": "recent_list_populated",
+      "ok": false,
+      "note": "recent item rendered with actions"
+    },
+    {
+      "step": "recent_open_tap",
+      "ok": false,
+      "note": "open action tapped"
+    },
+    {
+      "step": "recent_delete",
+      "ok": false,
+      "note": "delete action removes item or returns empty state"
+    }
+  ],
+  "pass": 8,
+  "fail": 9
+}
