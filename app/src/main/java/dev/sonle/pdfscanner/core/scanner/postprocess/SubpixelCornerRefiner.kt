@@ -31,13 +31,17 @@ class SubpixelCornerRefiner {
             toPoint(quad.bl, width, height)
         )
 
-        Imgproc.cornerSubPix(
-            gray,
-            points,
-            Size(5.0, 5.0),
-            Size(-1.0, -1.0),
-            TermCriteria(TermCriteria.MAX_ITER + TermCriteria.EPS, 30, 0.01)
-        )
+        runCatching {
+            Imgproc.cornerSubPix(
+                gray,
+                points,
+                Size(5.0, 5.0),
+                Size(-1.0, -1.0),
+                TermCriteria(TermCriteria.MAX_ITER + TermCriteria.EPS, 30, 0.01)
+            )
+        }.onFailure { error ->
+            return quad
+        }
 
         val refined = points.toArray().toList()
         return quad.copy(
@@ -49,9 +53,11 @@ class SubpixelCornerRefiner {
     }
 
     private fun toPoint(point: NormalizedPoint, width: Int, height: Int): Point {
+        val maxX = (width - 1).coerceAtLeast(0).toDouble()
+        val maxY = (height - 1).coerceAtLeast(0).toDouble()
         return Point(
-            point.x.toDouble() * width.toDouble(),
-            point.y.toDouble() * height.toDouble()
+            (point.x.toDouble() * width.toDouble()).coerceIn(0.0, maxX),
+            (point.y.toDouble() * height.toDouble()).coerceIn(0.0, maxY)
         )
     }
 

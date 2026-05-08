@@ -12,6 +12,7 @@ plugins {
 android {
     namespace = "dev.sonle.pdfscanner"
     compileSdk = 36
+    ndkVersion = "27.0.12077973"
 
     defaultConfig {
         applicationId = "dev.sonle.pdfscanner"
@@ -181,10 +182,10 @@ dependencies {
 
     // OpenCV
     implementation(libs.opencv.android)
-    implementation(libs.tensorflow.lite)
-    implementation(libs.tensorflow.lite.gpu)
-    implementation(libs.tensorflow.lite.gpu.delegate.plugin)
-    implementation(libs.tensorflow.lite.support)
+    implementation(libs.litert)
+    implementation(libs.litert.api)
+    implementation(libs.litert.support)
+    implementation(libs.litert.metadata)
 
     // Testing
     testImplementation(libs.junit)

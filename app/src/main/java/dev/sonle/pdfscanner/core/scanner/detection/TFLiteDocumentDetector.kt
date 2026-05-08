@@ -11,11 +11,9 @@ import org.opencv.core.Mat
 import org.opencv.core.Core
 import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
-import org.tensorflow.lite.Delegate
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.support.common.FileUtil
-import org.tensorflow.lite.gpu.GpuDelegate
 import timber.log.Timber
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -27,7 +25,6 @@ class TFLiteDocumentDetector(
 
     private val modelFileName = "fairscan-segmentation-model.tflite"
 
-    private val delegates = mutableListOf<Delegate>()
     private val interpreter: Interpreter by lazy { createInterpreter() }
 
     override suspend fun detect(
@@ -81,9 +78,6 @@ class TFLiteDocumentDetector(
             setUseXNNPACK(true)
             setUseNNAPI(false)
         }
-        val gpuEnabled = false
-        // Force stable CPU/XNNPACK path for this debug session.
-
         return Interpreter(modelBuffer, options)
     }
 

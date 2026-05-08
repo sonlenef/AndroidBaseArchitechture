@@ -6,14 +6,9 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
-import dev.sonle.pdfscanner.domain.navigation.LoginScreenRoute
-import dev.sonle.pdfscanner.domain.navigation.ProfileScreenRoute
+import dev.sonle.pdfscanner.domain.navigation.MainScreenRoute
 import dev.sonle.pdfscanner.domain.navigation.ScannerScreenRoute
-import dev.sonle.pdfscanner.domain.navigation.UserListScreenRoute
-import dev.sonle.pdfscanner.presentation.features.login.LoginScreen
-import dev.sonle.pdfscanner.presentation.features.profile.ProfileScreen
-import dev.sonle.pdfscanner.presentation.features.userlist.UserListScreen
+import dev.sonle.pdfscanner.presentation.features.main.MainScreen
 import dev.sonle.pdfscanner.presentation.features.scanner.ScannerScreen
 
 /**
@@ -31,21 +26,13 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
     CompositionLocalProvider(LocalNavigator provides navigator) {
         NavHost(
             navController = navController,
-            startDestination = UserListScreenRoute
+            startDestination = MainScreenRoute
         ) {
-            composable<LoginScreenRoute> {
-                LoginScreen()
+            composable<MainScreenRoute> {
+                MainScreen(
+                    onOpenScanner = { navigator.navigateTo(ScannerScreenRoute) }
+                )
             }
-            
-            composable<UserListScreenRoute> {
-                UserListScreen()
-            }
-            
-            composable<ProfileScreenRoute> { backStackEntry ->
-                val profileArgs = backStackEntry.toRoute<ProfileScreenRoute>()
-                ProfileScreen(userId = profileArgs.userId)
-            }
-
             composable<ScannerScreenRoute> {
                 ScannerScreen(onNavigateBack = { navigator.navigateBack() })
             }

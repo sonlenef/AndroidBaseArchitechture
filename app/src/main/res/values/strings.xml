@@ -73,4 +73,17 @@
     <string name="scanner_frame_auto_hint">Đang tự động nhận diện viền tài liệu</string>
     <string name="scanner_capture_again">Chụp lại</string>
     <string name="scanner_save_pdf">Lưu PDF</string>
+
+    <!-- Main Screen -->
+    <string name="main_tab_home">Home</string>
+    <string name="main_tab_settings">Settings</string>
+    <string name="main_scan_button">Scan</string>
+    <string name="main_home_title">Document Scanner</string>
+    <string name="main_home_subtitle">Scan and manage your documents in one place.</string>
+    <string name="main_quick_scan_title">Quick Scan</string>
+    <string name="main_quick_scan_desc">Tap Scan to capture a document with automatic edge detection.</string>
+    <string name="main_settings_title">Settings</string>
+    <string name="main_settings_subtitle">Configure your scanning experience.</string>
+    <string name="main_default_quality_title">Default Output</string>
+    <string name="main_default_quality_desc">PDF output is optimized for clear text and lightweight files.</string>
 </resources>

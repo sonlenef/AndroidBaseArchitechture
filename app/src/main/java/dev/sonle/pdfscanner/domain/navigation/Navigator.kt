@@ -42,6 +42,9 @@ object LoginScreenRoute
 object UserListScreenRoute
 
 @Serializable
+object MainScreenRoute
+
+@Serializable
 object ScannerScreenRoute
 
 @Serializable

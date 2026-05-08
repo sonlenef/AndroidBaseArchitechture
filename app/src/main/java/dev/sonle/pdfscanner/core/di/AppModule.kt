@@ -14,9 +14,6 @@ import dev.sonle.pdfscanner.domain.usecase.RefreshUsersUseCase
 import dev.sonle.pdfscanner.domain.usecase.UpdateFavoriteStatusUseCase
 import dev.sonle.pdfscanner.domain.usecase.UpdateUserUseCase
 import dev.sonle.pdfscanner.domain.usecase.SavePdfUseCase
-import dev.sonle.pdfscanner.presentation.features.login.LoginViewModel
-import dev.sonle.pdfscanner.presentation.features.profile.ProfileViewModel
-import dev.sonle.pdfscanner.presentation.features.userlist.UserListViewModel
 import dev.sonle.pdfscanner.presentation.features.scanner.ScannerViewModel
 import org.koin.androidx.viewmodel.dsl.viewModelOf
 import org.koin.core.module.dsl.factoryOf
@@ -57,8 +54,5 @@ val appModule = module {
     factoryOf(::SummarizeUserUseCase)
 
     // ViewModels
-    viewModelOf(::LoginViewModel)
-    viewModelOf(::ProfileViewModel)
-    viewModelOf(::UserListViewModel)
     viewModelOf(::ScannerViewModel)
 }
