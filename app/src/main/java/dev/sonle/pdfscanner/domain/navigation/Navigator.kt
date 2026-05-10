@@ -49,3 +49,6 @@ object ScannerScreenRoute
 
 @Serializable
 data class ProfileScreenRoute(val userId: String)
+
+@Serializable
+data class PdfViewerScreenRoute(val filePath: String)

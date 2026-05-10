@@ -10,6 +10,9 @@ import dev.sonle.pdfscanner.domain.navigation.MainScreenRoute
 import dev.sonle.pdfscanner.domain.navigation.ScannerScreenRoute
 import dev.sonle.pdfscanner.presentation.features.main.MainScreen
 import dev.sonle.pdfscanner.presentation.features.scanner.ScannerScreen
+import dev.sonle.pdfscanner.domain.navigation.PdfViewerScreenRoute
+import dev.sonle.pdfscanner.presentation.features.viewer.PdfViewerScreen
+import androidx.navigation.toRoute
 
 /**
  * Main navigation composable that defines the app's navigation graph
@@ -35,6 +38,13 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
             }
             composable<ScannerScreenRoute> {
                 ScannerScreen(onNavigateBack = { navigator.navigateBack() })
+            }
+            composable<PdfViewerScreenRoute> { backStackEntry ->
+                val route = backStackEntry.toRoute<PdfViewerScreenRoute>()
+                PdfViewerScreen(
+                    filePath = route.filePath,
+                    onBack = { navigator.navigateBack() }
+                )
             }
         }
     }

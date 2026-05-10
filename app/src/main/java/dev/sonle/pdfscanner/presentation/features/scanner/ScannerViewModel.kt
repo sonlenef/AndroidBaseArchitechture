@@ -480,6 +480,28 @@ class ScannerViewModel(
         }
     }
 
+    /**
+     * Toolbar / system back from Page Review.
+     * In **single** mode: clears the session so the camera is fresh (no thumbnail stack).
+     * In **multi** mode: returns to camera keeping scanned pages.
+     */
+    fun onReviewBack() {
+        if (clearsScanSessionOnReviewBack(currentPageMode)) {
+            scannedPages.clear()
+            editingPageIndex = null
+            pendingInsertIndex = null
+            autoCaptureArmed = true
+            _detection.value = DetectionUiState()
+            _uiState.value = ScannerUiState.Camera(
+                scannerMode = currentScannerMode,
+                pageMode = currentPageMode,
+                scannedPages = emptyList()
+            )
+        } else {
+            goBackToCamera()
+        }
+    }
+
     // ─── Save PDF ────────────────────────────────────────────────────────────
 
     fun savePdf() {
@@ -549,7 +571,7 @@ class ScannerViewModel(
                 true
             }
             is ScannerUiState.PageReview -> {
-                goBackToCamera()
+                onReviewBack()
                 true
             }
             is ScannerUiState.Error -> {

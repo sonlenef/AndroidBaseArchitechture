@@ -144,7 +144,7 @@ fun ScannerScreen(
                 onDeletePage = viewModel::onDeletePage,
                 onAddMorePages = viewModel::onAddMorePages,
                 onSavePdf = viewModel::savePdf,
-                onBack = viewModel::onAddMorePages
+                onBack = viewModel::onReviewBack
             )
         }
 

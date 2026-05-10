@@ -27,11 +27,14 @@ import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import dev.sonle.pdfscanner.R
 import dev.sonle.pdfscanner.domain.model.RecentScan
+import dev.sonle.pdfscanner.domain.navigation.PdfViewerScreenRoute
+import dev.sonle.pdfscanner.presentation.navigation.LocalNavigator
 import org.koin.androidx.compose.koinViewModel
 import java.io.File
 import java.text.DateFormat
@@ -43,6 +46,7 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val navigator = LocalNavigator.current
     val uiState by viewModel.uiState.collectAsState()
 
     Column(
@@ -143,7 +147,7 @@ fun HomeScreen(
                 items(uiState.recentScans, key = { it.id }) { recentScan ->
                     RecentScanItem(
                         recentScan = recentScan,
-                        onOpen = { openRecentPdf(context, recentScan.filePath) },
+                        onOpen = { navigator.navigateTo(PdfViewerScreenRoute(recentScan.filePath)) },
                         onDelete = { viewModel.deleteRecentScan(recentScan.id) }
                     )
                 }
@@ -209,46 +213,76 @@ private fun RecentScanItem(
     onOpen: () -> Unit,
     onDelete: () -> Unit
 ) {
-    Surface(
+    Card(
+        onClick = onOpen,
         shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+        ),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(
+        Row(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = recentScan.fileName,
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.SemiBold
-            )
-            Text(
-                text = stringResource(
-                    R.string.main_recent_scan_meta,
-                    formatDate(recentScan.savedAt),
-                    recentScan.pageCount,
-                    formatFileSize(
-                        recentScan.fileSizeBytes,
-                        stringResource(R.string.main_recent_size_zero)
-                    )
-                ),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(
-                    text = stringResource(R.string.main_recent_open),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.clickable(onClick = onOpen)
+            // Document Icon
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                        shape = RoundedCornerShape(12.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Iconsax.Bold.DocumentText,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
                 )
+            }
+            
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            // Text Details
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(R.string.main_recent_delete),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.clickable(onClick = onDelete)
+                    text = recentScan.fileName,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = stringResource(
+                        R.string.main_recent_scan_meta,
+                        formatDate(recentScan.savedAt),
+                        recentScan.pageCount,
+                        formatFileSize(
+                            recentScan.fileSizeBytes,
+                            stringResource(R.string.main_recent_size_zero)
+                        )
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            
+            Spacer(modifier = Modifier.width(8.dp))
+            
+            // Delete Action
+            IconButton(
+                onClick = onDelete,
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    imageVector = Iconsax.Linear.Trash,
+                    contentDescription = stringResource(R.string.main_recent_delete),
+                    tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }
@@ -270,22 +304,6 @@ private fun formatFileSize(bytes: Long, zeroLabel: String): String {
     }
 }
 
-private fun openRecentPdf(context: android.content.Context, filePath: String) {
-    val file = File(filePath)
-    if (!file.exists()) return
-    val uri = FileProvider.getUriForFile(
-        context,
-        "${context.packageName}.provider",
-        file
-    )
-    val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
-        setDataAndType(uri, "application/pdf")
-        addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
-    }
-    runCatching {
-        context.startActivity(intent)
-    }
-}
 
 fun Modifier.shimmerEffect(): Modifier = composed {
     val transition = rememberInfiniteTransition(label = "shimmer")

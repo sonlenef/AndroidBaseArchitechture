@@ -10,7 +10,10 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -32,12 +35,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Done
-import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.List
-import androidx.compose.material.icons.rounded.Star
+import com.github.yohannestz.iconsax_compose.iconsax.Iconsax
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -50,6 +48,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
@@ -83,6 +82,7 @@ import org.koin.compose.koinInject
 import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import kotlinx.coroutines.delay
 
 @Composable
 fun CameraView(
@@ -110,6 +110,62 @@ fun CameraView(
     var hasTriggeredAutoCapture by remember { mutableStateOf(false) }
     var isFlashOn by remember { mutableStateOf(false) }
     var camera by remember { mutableStateOf<Camera?>(null) }
+    var isVisible by remember { mutableStateOf(false) }
+    var isClosing by remember { mutableStateOf(false) }
+    val contentAlpha by animateFloatAsState(
+        targetValue = if (isVisible) 1f else 0f,
+        animationSpec = if (isVisible) {
+            tween(durationMillis = 300)
+        } else {
+            tween(durationMillis = 300)
+        },
+        label = "camera_content_alpha"
+    )
+    val topControlsOffsetY by animateDpAsState(
+        targetValue = if (isVisible) 0.dp else (-24).dp,
+        animationSpec = if (isVisible) {
+            tween(durationMillis = 320, delayMillis = 30)
+        } else {
+            tween(durationMillis = 260)
+        },
+        label = "camera_top_exit_offset"
+    )
+    val topControlsAlpha by animateFloatAsState(
+        targetValue = if (isVisible) 1f else 0f,
+        animationSpec = if (isVisible) {
+            tween(durationMillis = 320, delayMillis = 30)
+        } else {
+            tween(durationMillis = 260)
+        },
+        label = "camera_top_exit_alpha"
+    )
+    val bottomControlsOffsetY by animateDpAsState(
+        targetValue = if (isVisible) 0.dp else 40.dp,
+        animationSpec = if (isVisible) {
+            tween(durationMillis = 340, delayMillis = 90)
+        } else {
+            tween(durationMillis = 280, delayMillis = 60)
+        },
+        label = "camera_bottom_exit_offset"
+    )
+    val bottomControlsAlpha by animateFloatAsState(
+        targetValue = if (isVisible) 1f else 0f,
+        animationSpec = if (isVisible) {
+            tween(durationMillis = 340, delayMillis = 90)
+        } else {
+            tween(durationMillis = 280, delayMillis = 60)
+        },
+        label = "camera_bottom_exit_alpha"
+    )
+    val exitScrimAlpha by animateFloatAsState(
+        targetValue = if (isVisible) 0f else 0.35f,
+        animationSpec = if (isVisible) {
+            tween(durationMillis = 260)
+        } else {
+            tween(durationMillis = 300)
+        },
+        label = "camera_exit_scrim_alpha"
+    )
 
     val previewView = remember {
         PreviewView(context).apply {
@@ -163,21 +219,55 @@ fun CameraView(
         camera?.cameraControl?.enableTorch(isFlashOn)
     }
 
-    Box(modifier = modifier.fillMaxSize().background(Color.Black)) {
+    LaunchedEffect(Unit) {
+        isVisible = true
+    }
+
+    LaunchedEffect(isClosing) {
+        if (isClosing) {
+            isVisible = false
+            delay(360)
+            onClose()
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color.Black)
+    ) {
         // Camera preview
-        AndroidView(factory = { previewView }, modifier = Modifier.fillMaxSize())
+        AndroidView(
+            factory = { previewView },
+            modifier = Modifier
+                .fillMaxSize()
+                .alpha(contentAlpha)
+        )
 
         // Detection overlay
         DocumentDetectionOverlay(
             quad = detectionState.quad,
             isStable = detectionState.isStable,
-            modifier = Modifier.align(Alignment.Center).fillMaxSize()
+            modifier = Modifier
+                .align(Alignment.Center)
+                .fillMaxSize()
+                .alpha(contentAlpha)
         )
+
+        if (exitScrimAlpha > 0f) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = exitScrimAlpha))
+            )
+        }
 
         // ─── Top Bar ─────────────────────────────────────────────────────
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .alpha(topControlsAlpha)
+                .offset(y = topControlsOffsetY)
                 .statusBarsPadding()
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -185,14 +275,25 @@ fun CameraView(
         ) {
             // Close button
             GlassIconButton(
-                icon = Icons.Rounded.Close,
+                icon = Iconsax.Linear.ArrowLeft,
                 contentDescription = stringResource(R.string.scanner_close),
-                onClick = onClose
+                onClick = {
+                    if (!isClosing) {
+                        isClosing = true
+                    }
+                }
+            )
+
+            // Auto or manual text toggle
+            GlassTextButton(
+                text = if (scannerMode == ScannerMode.AUTO) "AUTO" else "MANUAL",
+                isActive = scannerMode == ScannerMode.AUTO,
+                onClick = onToggleScannerMode
             )
 
             // Flash toggle
             GlassIconButton(
-                icon = Icons.Rounded.Star,
+                icon = if (isFlashOn) Iconsax.Bold.Flash else Iconsax.Linear.Flash,
                 contentDescription = "Flash",
                 tint = if (isFlashOn) Color(0xFFFFD700) else Color.White,
                 onClick = { isFlashOn = !isFlashOn }
@@ -211,6 +312,8 @@ fun CameraView(
             fontWeight = FontWeight.Medium,
             modifier = Modifier
                 .align(Alignment.TopCenter)
+                .alpha(topControlsAlpha)
+                .offset(y = topControlsOffsetY)
                 .statusBarsPadding()
                 .padding(top = 80.dp)
                 .clip(RoundedCornerShape(24.dp))
@@ -228,6 +331,8 @@ fun CameraView(
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .align(Alignment.TopCenter)
+                    .alpha(topControlsAlpha)
+                    .offset(y = topControlsOffsetY)
                     .statusBarsPadding()
                     .padding(top = 130.dp)
                     .clip(RoundedCornerShape(16.dp))
@@ -247,6 +352,8 @@ fun CameraView(
                 progress = { detectionState.stabilityProgress },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
+                    .alpha(bottomControlsAlpha)
+                    .offset(y = bottomControlsOffsetY)
                     .padding(bottom = 180.dp)
                     .size(48.dp),
                 strokeWidth = 4.dp,
@@ -259,6 +366,8 @@ fun CameraView(
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
+                .alpha(bottomControlsAlpha)
+                .offset(y = bottomControlsOffsetY)
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
                 .background(Color.Black.copy(alpha = 0.6f))
@@ -277,23 +386,15 @@ fun CameraView(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Left controls: Auto/Manual toggle & Single/Multi toggle
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    GlassIconButton(
-                        icon = if (scannerMode == ScannerMode.AUTO) Icons.Rounded.Star else Icons.Rounded.Edit,
-                        contentDescription = "Scanner Mode",
-                        isActive = scannerMode == ScannerMode.AUTO,
-                        onClick = onToggleScannerMode
+
+                // Left control: Thumbnail stack or placeholder
+                if (scannedPageCount > 0) {
+                    ThumbnailStackButton(
+                        count = scannedPageCount,
+                        onClick = onReviewPages
                     )
-                    
-                    GlassIconButton(
-                        icon = if (pageMode == PageMode.MULTI) Icons.Rounded.List else Icons.Rounded.Done,
-                        contentDescription = "Page Mode",
-                        isActive = pageMode == PageMode.MULTI,
-                        onClick = onTogglePageMode
-                    )
+                } else {
+                    Spacer(modifier = Modifier.size(56.dp))
                 }
 
                 // Shutter button (Center)
@@ -303,14 +404,16 @@ fun CameraView(
                     }
                 )
 
-                // Right control: Thumbnail stack or placeholder
-                if (scannedPageCount > 0) {
-                    ThumbnailStackButton(
-                        count = scannedPageCount,
-                        onClick = onReviewPages
+                // Left controls: Auto/Manual toggle & Single/Multi toggle
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    GlassIconButton(
+                        icon = Iconsax.Bold.DocumentCopy,
+                        contentDescription = "Page Mode",
+                        isActive = pageMode == PageMode.MULTI,
+                        onClick = onTogglePageMode
                     )
-                } else {
-                    Spacer(modifier = Modifier.size(56.dp))
                 }
             }
         }
@@ -338,15 +441,26 @@ private fun GlassIconButton(
     isActive: Boolean = false,
     onClick: () -> Unit
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.85f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "icon_btn_scale"
+    )
+
     val bgColor by animateColorAsState(
         targetValue = if (isActive) Color(0xFF00E676).copy(alpha = 0.2f) else Color.Black.copy(alpha = 0.3f),
         animationSpec = tween(300),
-        label = "icon_bg"
+        label = "icon_btn_bg"
     )
     val borderColor by animateColorAsState(
         targetValue = if (isActive) Color(0xFF00E676).copy(alpha = 0.6f) else Color.White.copy(alpha = 0.1f),
         animationSpec = tween(300),
-        label = "icon_border"
+        label = "icon_btn_border"
     )
     val iconTint by animateColorAsState(
         targetValue = if (isActive) Color(0xFF00E676) else tint,
@@ -356,11 +470,16 @@ private fun GlassIconButton(
 
     Box(
         modifier = Modifier
+            .scale(scale)
             .size(48.dp)
             .clip(CircleShape)
             .background(bgColor)
             .border(1.dp, borderColor, CircleShape)
-            .clickable(onClick = onClick),
+            .clickable(
+                interactionSource = interactionSource,
+                indication = androidx.compose.foundation.LocalIndication.current,
+                onClick = onClick
+            ),
         contentAlignment = Alignment.Center
     ) {
         Icon(
@@ -373,14 +492,88 @@ private fun GlassIconButton(
 }
 
 @Composable
+private fun GlassTextButton(
+    text: String,
+    isActive: Boolean = false,
+    onClick: () -> Unit
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.92f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "btn_scale"
+    )
+
+    val bgColor by animateColorAsState(
+        targetValue = if (isActive) Color(0xFF00E676).copy(alpha = 0.2f) else Color.Black.copy(alpha = 0.3f),
+        animationSpec = tween(300),
+        label = "btn_bg"
+    )
+    val borderColor by animateColorAsState(
+        targetValue = if (isActive) Color(0xFF00E676).copy(alpha = 0.6f) else Color.White.copy(alpha = 0.1f),
+        animationSpec = tween(300),
+        label = "btn_border"
+    )
+    val textColor by animateColorAsState(
+        targetValue = if (isActive) Color(0xFF00E676) else Color.White,
+        animationSpec = tween(300),
+        label = "btn_text"
+    )
+
+    Box(
+        modifier = Modifier
+            .scale(scale)
+            .height(36.dp)
+            .clip(RoundedCornerShape(5.dp))
+            .background(bgColor)
+            .border(1.dp, borderColor, RoundedCornerShape(5.dp))
+            .clickable(
+                interactionSource = interactionSource,
+                indication = androidx.compose.foundation.LocalIndication.current,
+                onClick = onClick
+            )
+            .padding(horizontal = 24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            color = textColor,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.sp
+        )
+    }
+}
+
+@Composable
 private fun ThumbnailStackButton(
     count: Int,
     onClick: () -> Unit
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.85f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "thumbnail_scale"
+    )
+
     Box(
         modifier = Modifier
+            .scale(scale)
             .size(56.dp)
-            .clickable(onClick = onClick),
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null, // Custom scale animation instead of ripple
+                onClick = onClick
+            ),
         contentAlignment = Alignment.Center
     ) {
         // Stack effect
@@ -405,7 +598,7 @@ private fun ThumbnailStackButton(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                Icons.Rounded.Star,
+                Iconsax.Bold.Gallery,
                 contentDescription = null,
                 tint = Color.White.copy(alpha = 0.5f),
                 modifier = Modifier.size(24.dp)
@@ -440,26 +633,36 @@ private fun ShutterButton(onClick: () -> Unit) {
     val isPressed by interactionSource.collectIsPressedAsState()
 
     val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.92f else 1f,
-        animationSpec = tween(150),
+        targetValue = if (isPressed) 0.94f else 1f,
+        animationSpec = tween(durationMillis = 140),
         label = "shutter_scale"
     )
-
-    val innerScale by animateFloatAsState(
-        targetValue = if (isPressed) 0.85f else 1f,
-        animationSpec = tween(150),
-        label = "shutter_inner_scale"
+    val coreScale by animateFloatAsState(
+        targetValue = if (isPressed) 0.9f else 1f,
+        animationSpec = tween(durationMillis = 140),
+        label = "shutter_core_scale"
+    )
+    val ringAlpha by animateFloatAsState(
+        targetValue = if (isPressed) 0.95f else 0.78f,
+        animationSpec = tween(durationMillis = 180),
+        label = "shutter_ring_alpha"
+    )
+    val iconScale by animateFloatAsState(
+        targetValue = if (isPressed) 0.92f else 1f,
+        animationSpec = tween(durationMillis = 140),
+        label = "shutter_icon_scale"
     )
 
     Box(
         modifier = Modifier
-            .size(80.dp)
+            .size(56.dp)
             .scale(scale)
             .clip(CircleShape)
-            .border(4.dp, Color.White.copy(alpha = 0.9f), CircleShape)
-            .padding(6.dp)
+            .background(Color.Black.copy(alpha = 0.2f))
+            .border(2.dp, Color.White.copy(alpha = ringAlpha), CircleShape)
+            .padding(4.dp)
             .clip(CircleShape)
-            .background(Color.Transparent)
+            .background(Color.Black.copy(alpha = 0.18f))
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -467,19 +670,31 @@ private fun ShutterButton(onClick: () -> Unit) {
             ),
         contentAlignment = Alignment.Center
     ) {
-        // Inner circle for shutter feel
         Box(
             modifier = Modifier
-                .size(60.dp)
-                .scale(innerScale)
+                .fillMaxSize()
+                .scale(coreScale)
                 .clip(CircleShape)
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(Color.White, Color.White.copy(alpha = 0.8f))
+                        colors = listOf(
+                            Color.White,
+                            Color(0xFFF4F4F4),
+                            Color(0xFFDCDCDC)
+                        )
                     )
-                )
-                .shadow(elevation = if (isPressed) 2.dp else 6.dp, shape = CircleShape)
-        )
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Iconsax.Linear.Scan,
+                contentDescription = stringResource(R.string.scanner_action_scan),
+                tint = Color.Black.copy(alpha = 0.78f),
+                modifier = Modifier
+                    .size(24.dp)
+                    .scale(iconScale)
+            )
+        }
     }
 }
 
@@ -492,22 +707,22 @@ internal fun DocumentDetectionOverlay(
     val corners = quad?.points().orEmpty()
     val lineColor = if (isStable) Color(0xFF00E676) else Color.White.copy(alpha = 0.9f)
 
-    if (corners.size == 4) {
-        Canvas(modifier = modifier.testTag("pdfDetectionOverlay")) {
-            val previewAspectRatio = 3f / 4f
-            val viewAspectRatio = size.width / size.height
-            val contentWidth: Float
-            val contentHeight: Float
-            if (viewAspectRatio > previewAspectRatio) {
-                contentHeight = size.height
-                contentWidth = contentHeight * previewAspectRatio
-            } else {
-                contentWidth = size.width
-                contentHeight = contentWidth / previewAspectRatio
-            }
-            val contentLeft = (size.width - contentWidth) / 2f
-            val contentTop = (size.height - contentHeight) / 2f
+    Canvas(modifier = modifier.testTag("pdfDetectionOverlay")) {
+        val previewAspectRatio = 3f / 4f
+        val viewAspectRatio = size.width / size.height
+        val contentWidth: Float
+        val contentHeight: Float
+        if (viewAspectRatio > previewAspectRatio) {
+            contentHeight = size.height
+            contentWidth = contentHeight * previewAspectRatio
+        } else {
+            contentWidth = size.width
+            contentHeight = contentWidth / previewAspectRatio
+        }
+        val contentLeft = (size.width - contentWidth) / 2f
+        val contentTop = (size.height - contentHeight) / 2f
 
+        if (corners.size == 4) {
             val mapped = corners.map {
                 Offset(
                     x = contentLeft + (it.x * contentWidth),
@@ -535,51 +750,42 @@ internal fun DocumentDetectionOverlay(
                 drawCircle(color = lineColor.copy(alpha = 0.2f), radius = 20f, center = point)
                 drawCircle(color = Color.White, radius = 8f, center = point)
             }
-        }
-    } else {
-        // Scanning indicator when no document is found
-        Box(
-            modifier = modifier
-                .testTag("pdfDetectionOverlay")
-                .padding(horizontal = 32.dp, vertical = 80.dp)
-                .border(
-                    width = 2.dp,
-                    color = Color.White.copy(alpha = 0.2f),
-                    shape = RoundedCornerShape(16.dp)
-                )
-        ) {
-            // Corner highlights
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                val cornerLength = 40f
-                val strokeWidth = 4f
-                val color = Color.White.copy(alpha = 0.6f)
+        } else {
+            // Scanning indicator when no document is found
+            val cornerLength = 60f
+            val strokeWidth = 6f
+            val color = Color.White.copy(alpha = 0.5f)
 
-                // Top Left
-                drawLine(color, Offset.Zero, Offset(cornerLength, 0f), strokeWidth)
-                drawLine(color, Offset.Zero, Offset(0f, cornerLength), strokeWidth)
+            // Padding inside the camera view for the viewfinder
+            val padding = 48.dp.toPx()
+            val vfLeft = contentLeft + padding
+            val vfTop = contentTop + padding
+            val vfRight = contentLeft + contentWidth - padding
+            val vfBottom = contentTop + contentHeight - padding
 
-                // Top Right
-                drawLine(color, Offset(size.width, 0f), Offset(size.width - cornerLength, 0f), strokeWidth)
-                drawLine(color, Offset(size.width, 0f), Offset(size.width, cornerLength), strokeWidth)
+            // Draw border
+            drawRect(
+                color = color.copy(alpha = 0.2f),
+                topLeft = Offset(vfLeft, vfTop),
+                size = androidx.compose.ui.geometry.Size(vfRight - vfLeft, vfBottom - vfTop),
+                style = Stroke(width = 2f)
+            )
 
-                // Bottom Left
-                drawLine(color, Offset(0f, size.height), Offset(cornerLength, size.height), strokeWidth)
-                drawLine(color, Offset(0f, size.height), Offset(0f, size.height - cornerLength), strokeWidth)
+            // Top Left
+            drawLine(color, Offset(vfLeft, vfTop), Offset(vfLeft + cornerLength, vfTop), strokeWidth)
+            drawLine(color, Offset(vfLeft, vfTop), Offset(vfLeft, vfTop + cornerLength), strokeWidth)
 
-                // Bottom Right
-                drawLine(
-                    color,
-                    Offset(size.width, size.height),
-                    Offset(size.width - cornerLength, size.height),
-                    strokeWidth
-                )
-                drawLine(
-                    color,
-                    Offset(size.width, size.height),
-                    Offset(size.width, size.height - cornerLength),
-                    strokeWidth
-                )
-            }
+            // Top Right
+            drawLine(color, Offset(vfRight, vfTop), Offset(vfRight - cornerLength, vfTop), strokeWidth)
+            drawLine(color, Offset(vfRight, vfTop), Offset(vfRight, vfTop + cornerLength), strokeWidth)
+
+            // Bottom Left
+            drawLine(color, Offset(vfLeft, vfBottom), Offset(vfLeft + cornerLength, vfBottom), strokeWidth)
+            drawLine(color, Offset(vfLeft, vfBottom), Offset(vfLeft, vfBottom - cornerLength), strokeWidth)
+
+            // Bottom Right
+            drawLine(color, Offset(vfRight, vfBottom), Offset(vfRight - cornerLength, vfBottom), strokeWidth)
+            drawLine(color, Offset(vfRight, vfBottom), Offset(vfRight, vfBottom - cornerLength), strokeWidth)
         }
     }
 }

@@ -1,8 +1,6 @@
 package dev.sonle.pdfscanner.presentation.features.scanner.components
 
 import android.graphics.Bitmap
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -10,42 +8,37 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Build
 import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import dev.sonle.pdfscanner.R
 import dev.sonle.pdfscanner.core.scanner.model.DocumentQuad
 import dev.sonle.pdfscanner.core.scanner.model.NormalizedPoint
-import kotlin.math.pow
 import kotlin.math.roundToInt
-import kotlin.math.sqrt
 
 @Composable
 fun CropEditorView(
@@ -81,127 +74,50 @@ fun CropEditorView(
         }
     }
 
-    // Convert normalized points to pixel offsets for drawing
+    val currentQuad by rememberUpdatedState(editableQuad)
+    val currentDrawRect by rememberUpdatedState(imageDrawRect)
+
     val cornerOffsets = remember(editableQuad, imageDrawRect) {
-        if (imageDrawRect == Rect.Zero) {
-            listOf(Offset.Zero, Offset.Zero, Offset.Zero, Offset.Zero)
-        } else {
-            editableQuad.points().map { point ->
-                Offset(
-                    x = imageDrawRect.left + point.x * imageDrawRect.width,
-                    y = imageDrawRect.top + point.y * imageDrawRect.height
-                )
-            }
-        }
+        cornerOffsetsForQuad(editableQuad, imageDrawRect)
     }
 
-    // Magnifier state
     val magnifierPosition = remember { mutableStateOf<Offset?>(null) }
     val magnifierRadius = 80f
     val magnifierZoom = 2.5f
+    val imageBitmap = remember(originalBitmap) { originalBitmap.asImageBitmap() }
 
-    Column(
+    val accentColor = Color(0xFF00E676)
+    val surfaceDark = Color(0xFF1E1E1E)
+
+    Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(Color(0xFF0A0A0A))
     ) {
-        // ─── Top Bar ─────────────────────────────────────────────────────
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(Color.Black.copy(alpha = 0.3f))
-                    .border(1.dp, Color.White.copy(alpha = 0.1f), CircleShape)
-                    .clickable(onClick = onRetake),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = stringResource(R.string.scanner_crop_retake),
-                    tint = Color.White,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-
-            Text(
-                text = stringResource(R.string.scanner_crop_title),
-                style = MaterialTheme.typography.titleMedium,
-                color = Color.White,
-                fontWeight = FontWeight.Bold
-            )
-
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFF00E676).copy(alpha = 0.1f))
-                    .border(1.dp, Color(0xFF00E676).copy(alpha = 0.3f), CircleShape)
-                    .clickable(onClick = onConfirm),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    Icons.Rounded.Check,
-                    contentDescription = stringResource(R.string.scanner_crop_confirm),
-                    tint = Color(0xFF00E676),
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-        }
-
-        // ─── Hint ────────────────────────────────────────────────────────
-        Text(
-            text = stringResource(R.string.scanner_crop_hint),
-            style = MaterialTheme.typography.labelMedium,
-            color = Color.White,
-            modifier = Modifier
-                .padding(horizontal = 16.dp, vertical = 4.dp)
-                .align(Alignment.CenterHorizontally)
-                .background(Color.Black.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
-                .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(16.dp))
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-        )
-
         // ─── Image + Crop Overlay ────────────────────────────────────────
         Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                    .onSizeChanged { imageSize = it }
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = 120.dp, top = 100.dp) // Provide space for floating elements
+                .onSizeChanged { imageSize = it }
         ) {
-            // Background image
             Image(
-                bitmap = originalBitmap.asImageBitmap(),
+                bitmap = imageBitmap,
                 contentDescription = "Document",
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.fillMaxSize()
             )
 
-            // Crop overlay with draggable corners
             if (imageSize.width > 0 && imageSize.height > 0) {
                 Canvas(
                     modifier = Modifier
                         .fillMaxSize()
-                        .pointerInput(editableQuad) {
+                        .pointerInput(imageDrawRect) {
                             detectDragGestures(
                                 onDragStart = { offset ->
-                                    // Find nearest corner within touch radius
-                                    val touchRadius = 60f
-                                    draggingCornerIndex = cornerOffsets
-                                        .indexOfFirst { corner ->
-                                            sqrt(
-                                                (corner.x - offset.x).pow(2) +
-                                                (corner.y - offset.y).pow(2)
-                                            ) < touchRadius
-                                        }
+                                    val touchRadius = 80f
+                                    val corners = cornerOffsetsForQuad(currentQuad, currentDrawRect)
+                                    draggingCornerIndex = indexOfDraggableCorner(offset, corners, touchRadius)
                                     if (draggingCornerIndex >= 0) {
                                         magnifierPosition.value = offset
                                     }
@@ -209,27 +125,22 @@ fun CropEditorView(
                                 onDrag = { change, _ ->
                                     if (draggingCornerIndex >= 0) {
                                         val pos = change.position
+                                        val rect = currentDrawRect
                                         magnifierPosition.value = pos
-                                        val normalizedX = if (imageDrawRect.width > 0f) {
-                                            ((pos.x - imageDrawRect.left) / imageDrawRect.width)
-                                                .coerceIn(0.01f, 0.99f)
-                                        } else {
-                                            0.5f
-                                        }
-                                        val normalizedY = if (imageDrawRect.height > 0f) {
-                                            ((pos.y - imageDrawRect.top) / imageDrawRect.height)
-                                                .coerceIn(0.01f, 0.99f)
-                                        } else {
-                                            0.5f
-                                        }
+                                        val normalizedX = if (rect.width > 0f) {
+                                            ((pos.x - rect.left) / rect.width).coerceIn(0.01f, 0.99f)
+                                        } else 0.5f
+                                        val normalizedY = if (rect.height > 0f) {
+                                            ((pos.y - rect.top) / rect.height).coerceIn(0.01f, 0.99f)
+                                        } else 0.5f
                                         val newPoint = NormalizedPoint(normalizedX, normalizedY)
-
+                                        val quad = currentQuad
                                         val updatedQuad = when (draggingCornerIndex) {
-                                            0 -> editableQuad.copy(tl = newPoint)
-                                            1 -> editableQuad.copy(tr = newPoint)
-                                            2 -> editableQuad.copy(br = newPoint)
-                                            3 -> editableQuad.copy(bl = newPoint)
-                                            else -> editableQuad
+                                            0 -> quad.copy(tl = newPoint)
+                                            1 -> quad.copy(tr = newPoint)
+                                            2 -> quad.copy(br = newPoint)
+                                            3 -> quad.copy(bl = newPoint)
+                                            else -> quad
                                         }
                                         onQuadUpdated(updatedQuad)
                                     }
@@ -245,7 +156,6 @@ fun CropEditorView(
                             )
                         }
                 ) {
-                    // Semi-transparent overlay outside crop area
                     val path = Path().apply {
                         moveTo(cornerOffsets[0].x, cornerOffsets[0].y)
                         lineTo(cornerOffsets[1].x, cornerOffsets[1].y)
@@ -254,76 +164,36 @@ fun CropEditorView(
                         close()
                     }
 
-                    // Darken area outside quad
-                    drawRect(
-                        color = Color.Black.copy(alpha = 0.6f),
-                        size = size
-                    )
-                    drawPath(
-                        path = path,
-                        color = Color.Black.copy(alpha = 0.6f),
-                        blendMode = BlendMode.DstOut
-                    )
+                    // Darken outside
+                    drawRect(color = Color.Black.copy(alpha = 0.7f), size = size)
+                    drawPath(path = path, color = Color.Black.copy(alpha = 0.7f), blendMode = BlendMode.DstOut)
 
-                    // Quad border (glowing effect)
-                    drawPath(
-                        path = path,
-                        color = Color(0xFF00E676).copy(alpha = 0.3f),
-                        style = Stroke(width = 8f)
-                    )
-                    drawPath(
-                        path = path,
-                        color = Color(0xFF00E676),
-                        style = Stroke(width = 3f)
-                    )
+                    // Glow border
+                    drawPath(path = path, color = accentColor.copy(alpha = 0.4f), style = Stroke(width = 8f))
+                    drawPath(path = path, color = accentColor, style = Stroke(width = 3f))
 
-                    // Grid lines (rule of thirds within quad)
+                    // Grid lines
                     for (t in listOf(1f / 3f, 2f / 3f)) {
                         val topPoint = lerp(cornerOffsets[0], cornerOffsets[1], t)
                         val bottomPoint = lerp(cornerOffsets[3], cornerOffsets[2], t)
-                        drawLine(
-                            color = Color.White.copy(alpha = 0.4f),
-                            start = topPoint,
-                            end = bottomPoint,
-                            strokeWidth = 2f
-                        )
+                        drawLine(color = Color.White.copy(alpha = 0.3f), start = topPoint, end = bottomPoint, strokeWidth = 2f)
 
                         val leftPoint = lerp(cornerOffsets[0], cornerOffsets[3], t)
                         val rightPoint = lerp(cornerOffsets[1], cornerOffsets[2], t)
-                        drawLine(
-                            color = Color.White.copy(alpha = 0.4f),
-                            start = leftPoint,
-                            end = rightPoint,
-                            strokeWidth = 2f
-                        )
+                        drawLine(color = Color.White.copy(alpha = 0.3f), start = leftPoint, end = rightPoint, strokeWidth = 2f)
                     }
 
                     // Corner handles
                     cornerOffsets.forEachIndexed { index, corner ->
                         val isBeingDragged = index == draggingCornerIndex
-                        val handleRadius = if (isBeingDragged) 22f else 16f
+                        val handleRadius = if (isBeingDragged) 24f else 18f
 
-                        // Outer glow
-                        drawCircle(
-                            color = Color(0xFF00E676).copy(alpha = 0.4f),
-                            radius = handleRadius + 10f,
-                            center = corner
-                        )
-                        // White ring
-                        drawCircle(
-                            color = Color.White,
-                            radius = handleRadius,
-                            center = corner
-                        )
-                        // Inner green dot
-                        drawCircle(
-                            color = Color(0xFF00E676),
-                            radius = handleRadius - 6f,
-                            center = corner
-                        )
+                        drawCircle(color = accentColor.copy(alpha = if (isBeingDragged) 0.5f else 0.2f), radius = handleRadius + 8f, center = corner)
+                        drawCircle(color = Color.White, radius = handleRadius, center = corner, style = Stroke(width = 4f))
+                        drawCircle(color = if (isBeingDragged) accentColor else Color.White.copy(alpha = 0.5f), radius = handleRadius - 4f, center = corner)
                     }
 
-                    // Edge midpoint handles (smaller)
+                    // Edge midpoints
                     val edges = listOf(
                         cornerOffsets[0] to cornerOffsets[1],
                         cornerOffsets[1] to cornerOffsets[2],
@@ -332,100 +202,133 @@ fun CropEditorView(
                     )
                     edges.forEach { (start, end) ->
                         val mid = Offset((start.x + end.x) / 2f, (start.y + end.y) / 2f)
-                        drawCircle(
-                            color = Color.White.copy(alpha = 0.8f),
-                            radius = 6f,
-                            center = mid
-                        )
+                        drawCircle(color = Color.White, radius = 8f, center = mid)
+                        drawCircle(color = accentColor, radius = 4f, center = mid)
                     }
 
                     // Magnifier
                     magnifierPosition.value?.let { magPos ->
                         if (draggingCornerIndex >= 0) {
-                            val magCenterY = if (magPos.y > size.height / 3f) 100f else size.height - 100f
+                            val magCenterY = if (magPos.y > size.height / 3f) 120f else size.height - 120f
                             val magCenter = Offset(size.width / 2f, magCenterY)
+                            val lensRect = Rect(
+                                magCenter.x - magnifierRadius,
+                                magCenter.y - magnifierRadius,
+                                magCenter.x + magnifierRadius,
+                                magCenter.y + magnifierRadius
+                            )
 
-                            // Magnifier background
-                            drawCircle(
-                                color = Color.Black.copy(alpha = 0.9f),
-                                radius = magnifierRadius + 6f,
-                                center = magCenter
+                            val src = magnifierSourceRect(
+                                magPosCanvas = magPos,
+                                imageDrawRect = imageDrawRect,
+                                bitmapWidth = originalBitmap.width,
+                                bitmapHeight = originalBitmap.height,
+                                magnifierRadiusPx = magnifierRadius,
+                                zoom = magnifierZoom
                             )
-                            drawCircle(
-                                color = Color(0xFF00E676),
-                                radius = magnifierRadius + 6f,
-                                center = magCenter,
-                                style = Stroke(width = 4f)
-                            )
-                            // Crosshair
-                            drawLine(
-                                color = Color(0xFF00E676).copy(alpha = 0.8f),
-                                start = Offset(magCenter.x - 24f, magCenter.y),
-                                end = Offset(magCenter.x + 24f, magCenter.y),
-                                strokeWidth = 2f
-                            )
-                            drawLine(
-                                color = Color(0xFF00E676).copy(alpha = 0.8f),
-                                start = Offset(magCenter.x, magCenter.y - 24f),
-                                end = Offset(magCenter.x, magCenter.y + 24f),
-                                strokeWidth = 2f
-                            )
+
+                            clipPath(Path().apply { addOval(lensRect) }) {
+                                if (src != null) {
+                                    drawImage(
+                                        image = imageBitmap,
+                                        srcOffset = IntOffset(src.left, src.top),
+                                        srcSize = IntSize(src.width, src.height),
+                                        dstOffset = IntOffset(lensRect.left.roundToInt(), lensRect.top.roundToInt()),
+                                        dstSize = IntSize((magnifierRadius * 2f).roundToInt(), (magnifierRadius * 2f).roundToInt()),
+                                        filterQuality = FilterQuality.High
+                                    )
+                                } else {
+                                    drawRect(
+                                        color = Color.Black.copy(alpha = 0.88f),
+                                        topLeft = Offset(lensRect.left, lensRect.top),
+                                        size = Size(magnifierRadius * 2f, magnifierRadius * 2f)
+                                    )
+                                }
+                            }
+
+                            drawCircle(color = Color.White, radius = magnifierRadius, center = magCenter, style = Stroke(width = 6f))
+                            drawLine(color = accentColor, start = Offset(magCenter.x - 24f, magCenter.y), end = Offset(magCenter.x + 24f, magCenter.y), strokeWidth = 3f)
+                            drawLine(color = accentColor, start = Offset(magCenter.x, magCenter.y - 24f), end = Offset(magCenter.x, magCenter.y + 24f), strokeWidth = 3f)
                         }
                     }
                 }
             }
         }
 
-        // ─── Bottom Actions ──────────────────────────────────────────────
+        // ─── Top Header ──────────────────────────────────────────────────
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(Color.Black.copy(alpha = 0.8f), Color.Transparent)
+                    )
+                )
+                .statusBarsPadding()
+                .padding(top = 16.dp, bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = stringResource(R.string.scanner_crop_title),
+                style = MaterialTheme.typography.titleLarge,
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.5.sp
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = stringResource(R.string.scanner_crop_hint),
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White.copy(alpha = 0.7f)
+            )
+        }
+
+        // ─── Bottom Actions (Floating Pill) ──────────────────────────────
         Box(
             modifier = Modifier
+                .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
-                .background(Color.Black.copy(alpha = 0.6f))
-                .border(
-                    width = 1.dp,
-                    color = Color.White.copy(alpha = 0.05f),
-                    shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f))
+                    )
                 )
                 .navigationBarsPadding()
-                .padding(horizontal = 24.dp, vertical = 24.dp)
+                .padding(horizontal = 24.dp, vertical = 24.dp),
+            contentAlignment = Alignment.Center
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(32.dp))
+                    .background(surfaceDark.copy(alpha = 0.9f))
+                    .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(32.dp))
+                    .padding(horizontal = 12.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Retake
-                OutlinedButton(
-                    onClick = onRetake,
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
-                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.3f)),
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.height(52.dp).weight(1f)
+                // Cancel / Retake
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.1f))
+                        .clickable { onRetake() },
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        Icons.Rounded.Refresh,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        stringResource(R.string.scanner_crop_retake),
-                        fontWeight = FontWeight.Medium
+                        Icons.Rounded.Close,
+                        contentDescription = stringResource(R.string.scanner_crop_retake),
+                        tint = Color.White
                     )
                 }
-                
-                Spacer(modifier = Modifier.width(16.dp))
 
-                // Auto detect
-                FilledTonalButton(
+                // Auto Detect
+                TextButton(
                     onClick = onAutoDetect,
-                    colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = Color.White.copy(alpha = 0.1f),
-                        contentColor = Color.White
-                    ),
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.height(52.dp).weight(1f)
+                    shape = RoundedCornerShape(24.dp),
+                    colors = ButtonDefaults.textButtonColors(contentColor = Color.White),
                 ) {
                     Icon(
                         Icons.Rounded.Build,
@@ -435,31 +338,24 @@ fun CropEditorView(
                     Spacer(Modifier.width(8.dp))
                     Text(
                         stringResource(R.string.scanner_crop_auto_detect),
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 15.sp
                     )
                 }
 
-                Spacer(modifier = Modifier.width(16.dp))
-
                 // Confirm
-                Button(
-                    onClick = onConfirm,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF00E676),
-                        contentColor = Color.Black
-                    ),
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.height(52.dp).weight(1f)
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(accentColor)
+                        .clickable { onConfirm() },
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         Icons.Rounded.Check,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        stringResource(R.string.scanner_crop_confirm),
-                        fontWeight = FontWeight.Bold
+                        contentDescription = stringResource(R.string.scanner_crop_confirm),
+                        tint = Color.Black
                     )
                 }
             }
@@ -475,3 +371,4 @@ private fun lerp(start: Offset, end: Offset, t: Float): Offset {
         y = start.y + (end.y - start.y) * t
     )
 }
+
