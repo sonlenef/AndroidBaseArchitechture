@@ -1,0 +1,21 @@
+{
+  "pass": 3,
+  "fail": 0,
+  "results": [
+    {
+      "step": "scanner_opened",
+      "ok": true,
+      "note": "camera screen visible"
+    },
+    {
+      "step": "multi_mode_toggled",
+      "ok": true,
+      "note": "page mode tapped"
+    },
+    {
+      "step": "multi_capture_overlay",
+      "ok": true,
+      "note": "stayed on camera after multi capture (overlay active)"
+    }
+  ]
+}

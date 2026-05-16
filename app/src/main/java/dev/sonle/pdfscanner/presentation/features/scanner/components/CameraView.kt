@@ -1,5 +1,6 @@
 package dev.sonle.pdfscanner.presentation.features.scanner.components
 
+import android.graphics.Bitmap
 import androidx.camera.core.AspectRatio
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
@@ -53,14 +54,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -76,8 +81,13 @@ import dev.sonle.pdfscanner.core.scanner.postprocess.SubpixelCornerRefiner
 import dev.sonle.pdfscanner.core.scanner.smoothing.QuadKalmanSmoother
 import dev.sonle.pdfscanner.core.scanner.stability.StabilityTracker
 import dev.sonle.pdfscanner.presentation.features.scanner.DetectionUiState
+import dev.sonle.pdfscanner.presentation.features.scanner.model.CaptureAnimationPhase
+import dev.sonle.pdfscanner.presentation.features.scanner.model.MultiCaptureOverlayState
 import dev.sonle.pdfscanner.presentation.features.scanner.model.PageMode
 import dev.sonle.pdfscanner.presentation.features.scanner.model.ScannerMode
+import dev.sonle.pdfscanner.presentation.features.scanner.util.ScannerPreviewMapper
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import org.koin.compose.koinInject
 import java.io.File
 import java.util.concurrent.ExecutorService
@@ -89,13 +99,19 @@ fun CameraView(
     scannerMode: ScannerMode,
     pageMode: PageMode,
     scannedPageCount: Int,
+    isCapturePipelineRunning: Boolean,
+    captureOverlay: MultiCaptureOverlayState,
+    latestThumbnail: ImageBitmap?,
     detectionState: DetectionUiState,
     onDetectionUpdated: (DocumentQuad?, Float, Boolean) -> Unit,
     shouldAutoCapture: () -> Boolean,
     onImageCaptured: (File) -> Unit,
+    onMultiCaptureShutter: () -> Unit,
+    onCaptureFreezeFrameReady: (Bitmap?) -> Unit,
     onToggleScannerMode: () -> Unit,
     onTogglePageMode: () -> Unit,
     onReviewPages: () -> Unit,
+    onCaptureAnimationStepFinished: (CaptureAnimationPhase) -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -112,6 +128,7 @@ fun CameraView(
     var camera by remember { mutableStateOf<Camera?>(null) }
     var isVisible by remember { mutableStateOf(false) }
     var isClosing by remember { mutableStateOf(false) }
+    var stackAnchorCenter by remember { mutableStateOf<Offset?>(null) }
     val contentAlpha by animateFloatAsState(
         targetValue = if (isVisible) 1f else 0f,
         animationSpec = if (isVisible) {
@@ -170,6 +187,7 @@ fun CameraView(
     val previewView = remember {
         PreviewView(context).apply {
             scaleType = PreviewView.ScaleType.FIT_CENTER
+            implementationMode = PreviewView.ImplementationMode.COMPATIBLE
         }
     }
 
@@ -244,15 +262,26 @@ fun CameraView(
                 .alpha(contentAlpha)
         )
 
-        // Detection overlay
+        val captureOverlayActive = captureOverlay as? MultiCaptureOverlayState.Active
+        val hideLiveDetection = captureOverlayActive?.sourceBitmap != null
+
         DocumentDetectionOverlay(
             quad = detectionState.quad,
             isStable = detectionState.isStable,
             modifier = Modifier
                 .align(Alignment.Center)
                 .fillMaxSize()
-                .alpha(contentAlpha)
+                .alpha(if (hideLiveDetection) 0f else contentAlpha)
         )
+
+        if (pageMode == PageMode.MULTI && captureOverlayActive != null) {
+            MultiCaptureAnimationOverlay(
+                overlayState = captureOverlay,
+                stackAnchorCenter = stackAnchorCenter,
+                onAnimationStepFinished = onCaptureAnimationStepFinished,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
 
         if (exitScrimAlpha > 0f) {
             Box(
@@ -288,6 +317,7 @@ fun CameraView(
             GlassTextButton(
                 text = if (scannerMode == ScannerMode.AUTO) "AUTO" else "MANUAL",
                 isActive = scannerMode == ScannerMode.AUTO,
+                enabled = !isCapturePipelineRunning,
                 onClick = onToggleScannerMode
             )
 
@@ -296,6 +326,7 @@ fun CameraView(
                 icon = if (isFlashOn) Iconsax.Bold.Flash else Iconsax.Linear.Flash,
                 contentDescription = "Flash",
                 tint = if (isFlashOn) Color(0xFFFFD700) else Color.White,
+                enabled = !isCapturePipelineRunning,
                 onClick = { isFlashOn = !isFlashOn }
             )
         }
@@ -387,43 +418,87 @@ fun CameraView(
                 verticalAlignment = Alignment.CenterVertically
             ) {
 
-                // Left control: Thumbnail stack or placeholder
-                if (scannedPageCount > 0) {
-                    ThumbnailStackButton(
-                        count = scannedPageCount,
-                        onClick = onReviewPages
-                    )
-                } else {
-                    Spacer(modifier = Modifier.size(56.dp))
-                }
-
-                // Shutter button (Center)
-                ShutterButton(
-                    onClick = {
-                        takePicture(context, imageCapture, cameraExecutor, onImageCaptured)
-                    }
-                )
-
-                // Left controls: Auto/Manual toggle & Single/Multi toggle
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
+                // Left: page mode
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     GlassIconButton(
                         icon = Iconsax.Bold.DocumentCopy,
                         contentDescription = "Page Mode",
                         isActive = pageMode == PageMode.MULTI,
+                        enabled = !isCapturePipelineRunning,
                         onClick = onTogglePageMode
                     )
+                }
+
+                // Center: shutter
+                ShutterButton(
+                    enabled = !isCapturePipelineRunning,
+                    onClick = {
+                        triggerCapture(
+                            pageMode = pageMode,
+                            previewView = previewView,
+                            context = context,
+                            imageCapture = imageCapture,
+                            cameraExecutor = cameraExecutor,
+                            onMultiCaptureShutter = onMultiCaptureShutter,
+                            onCaptureFreezeFrameReady = onCaptureFreezeFrameReady,
+                            onImageCaptured = onImageCaptured
+                        )
+                    }
+                )
+
+                // Right: thumbnail stack (UI unchanged); anchor slot for fly animation in multi
+                if (pageMode == PageMode.MULTI) {
+                    Box(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .testTag("thumbnailStackAnchor")
+                            .onGloballyPositioned { coordinates ->
+                                val pos = coordinates.positionInRoot()
+                                stackAnchorCenter = Offset(
+                                    pos.x + coordinates.size.width / 2f,
+                                    pos.y + coordinates.size.height / 2f
+                                )
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (scannedPageCount > 0) {
+                            ThumbnailStackButton(
+                                count = scannedPageCount,
+                                thumbnail = latestThumbnail,
+                                enabled = !isCapturePipelineRunning,
+                                onClick = onReviewPages
+                            )
+                        }
+                    }
+                } else if (scannedPageCount > 0) {
+                    ThumbnailStackButton(
+                        count = scannedPageCount,
+                        thumbnail = latestThumbnail,
+                        enabled = !isCapturePipelineRunning,
+                        onClick = onReviewPages
+                    )
+                } else {
+                    Spacer(modifier = Modifier.size(56.dp))
                 }
             }
         }
     }
 
     // Auto-capture logic
-    LaunchedEffect(detectionState.isStable) {
+    LaunchedEffect(detectionState.isStable, isCapturePipelineRunning) {
+        if (isCapturePipelineRunning) return@LaunchedEffect
         if (detectionState.isStable && shouldAutoCapture() && !hasTriggeredAutoCapture) {
             hasTriggeredAutoCapture = true
-            takePicture(context, imageCapture, cameraExecutor, onImageCaptured)
+            triggerCapture(
+                pageMode = pageMode,
+                previewView = previewView,
+                context = context,
+                imageCapture = imageCapture,
+                cameraExecutor = cameraExecutor,
+                onMultiCaptureShutter = onMultiCaptureShutter,
+                onCaptureFreezeFrameReady = onCaptureFreezeFrameReady,
+                onImageCaptured = onImageCaptured
+            )
         }
         if (!detectionState.isStable) {
             hasTriggeredAutoCapture = false
@@ -439,6 +514,7 @@ private fun GlassIconButton(
     contentDescription: String,
     tint: Color = Color.White,
     isActive: Boolean = false,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -476,6 +552,7 @@ private fun GlassIconButton(
             .background(bgColor)
             .border(1.dp, borderColor, CircleShape)
             .clickable(
+                enabled = enabled,
                 interactionSource = interactionSource,
                 indication = androidx.compose.foundation.LocalIndication.current,
                 onClick = onClick
@@ -495,6 +572,7 @@ private fun GlassIconButton(
 private fun GlassTextButton(
     text: String,
     isActive: Boolean = false,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -532,6 +610,7 @@ private fun GlassTextButton(
             .background(bgColor)
             .border(1.dp, borderColor, RoundedCornerShape(5.dp))
             .clickable(
+                enabled = enabled,
                 interactionSource = interactionSource,
                 indication = androidx.compose.foundation.LocalIndication.current,
                 onClick = onClick
@@ -552,7 +631,10 @@ private fun GlassTextButton(
 @Composable
 private fun ThumbnailStackButton(
     count: Int,
-    onClick: () -> Unit
+    thumbnail: ImageBitmap? = null,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -566,10 +648,11 @@ private fun ThumbnailStackButton(
     )
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .scale(scale)
             .size(56.dp)
             .clickable(
+                enabled = enabled,
                 interactionSource = interactionSource,
                 indication = null, // Custom scale animation instead of ripple
                 onClick = onClick
@@ -588,7 +671,7 @@ private fun ThumbnailStackButton(
             )
         }
         
-        // Front image placeholder
+        // Front thumbnail
         Box(
             modifier = Modifier
                 .size(48.dp)
@@ -597,12 +680,21 @@ private fun ThumbnailStackButton(
                 .border(2.dp, Color.White, RoundedCornerShape(8.dp)),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                Iconsax.Bold.Gallery,
-                contentDescription = null,
-                tint = Color.White.copy(alpha = 0.5f),
-                modifier = Modifier.size(24.dp)
-            )
+            if (thumbnail != null) {
+                androidx.compose.foundation.Image(
+                    bitmap = thumbnail,
+                    contentDescription = null,
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                Icon(
+                    Iconsax.Bold.Gallery,
+                    contentDescription = null,
+                    tint = Color.White.copy(alpha = 0.5f),
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
 
         // Badge
@@ -628,7 +720,10 @@ private fun ThumbnailStackButton(
 }
 
 @Composable
-private fun ShutterButton(onClick: () -> Unit) {
+private fun ShutterButton(
+    enabled: Boolean = true,
+    onClick: () -> Unit
+) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
 
@@ -664,6 +759,7 @@ private fun ShutterButton(onClick: () -> Unit) {
             .clip(CircleShape)
             .background(Color.Black.copy(alpha = 0.18f))
             .clickable(
+                enabled = enabled,
                 interactionSource = interactionSource,
                 indication = null,
                 onClick = onClick
@@ -708,27 +804,11 @@ internal fun DocumentDetectionOverlay(
     val lineColor = if (isStable) Color(0xFF00E676) else Color.White.copy(alpha = 0.9f)
 
     Canvas(modifier = modifier.testTag("pdfDetectionOverlay")) {
-        val previewAspectRatio = 3f / 4f
-        val viewAspectRatio = size.width / size.height
-        val contentWidth: Float
-        val contentHeight: Float
-        if (viewAspectRatio > previewAspectRatio) {
-            contentHeight = size.height
-            contentWidth = contentHeight * previewAspectRatio
-        } else {
-            contentWidth = size.width
-            contentHeight = contentWidth / previewAspectRatio
-        }
-        val contentLeft = (size.width - contentWidth) / 2f
-        val contentTop = (size.height - contentHeight) / 2f
+        val containerSize = Size(size.width, size.height)
+        val content = ScannerPreviewMapper.previewContentRect(containerSize)
 
-        if (corners.size == 4) {
-            val mapped = corners.map {
-                Offset(
-                    x = contentLeft + (it.x * contentWidth),
-                    y = contentTop + (it.y * contentHeight)
-                )
-            }
+        if (corners.size == 4 && quad != null) {
+            val mapped = ScannerPreviewMapper.mapQuadToOffsets(quad, containerSize)
             val path = Path().apply {
                 moveTo(mapped[0].x, mapped[0].y)
                 lineTo(mapped[1].x, mapped[1].y)
@@ -758,10 +838,10 @@ internal fun DocumentDetectionOverlay(
 
             // Padding inside the camera view for the viewfinder
             val padding = 48.dp.toPx()
-            val vfLeft = contentLeft + padding
-            val vfTop = contentTop + padding
-            val vfRight = contentLeft + contentWidth - padding
-            val vfBottom = contentTop + contentHeight - padding
+            val vfLeft = content.left + padding
+            val vfTop = content.top + padding
+            val vfRight = content.left + content.width - padding
+            val vfBottom = content.top + content.height - padding
 
             // Draw border
             drawRect(
@@ -789,6 +869,32 @@ internal fun DocumentDetectionOverlay(
         }
     }
 }
+
+private fun triggerCapture(
+    pageMode: PageMode,
+    previewView: PreviewView,
+    context: android.content.Context,
+    imageCapture: ImageCapture,
+    cameraExecutor: ExecutorService,
+    onMultiCaptureShutter: () -> Unit,
+    onCaptureFreezeFrameReady: (Bitmap?) -> Unit,
+    onImageCaptured: (File) -> Unit
+) {
+    if (pageMode == PageMode.MULTI) {
+        onMultiCaptureShutter()
+        val mainExecutor = ContextCompat.getMainExecutor(context)
+        cameraExecutor.execute {
+            val freezeFrame = capturePreviewSnapshot(previewView)
+            mainExecutor.execute {
+                onCaptureFreezeFrameReady(freezeFrame)
+            }
+        }
+    }
+    takePicture(context, imageCapture, cameraExecutor, onImageCaptured)
+}
+
+private fun capturePreviewSnapshot(previewView: PreviewView): Bitmap? =
+    runCatching { previewView.bitmap }.getOrNull()
 
 private fun takePicture(
     context: android.content.Context,

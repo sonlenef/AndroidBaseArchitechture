@@ -35,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -57,6 +58,7 @@ fun ScannerScreen(
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val detectionState by viewModel.detection.collectAsState()
+    val captureOverlay by viewModel.captureOverlay.collectAsState()
 
     var hasCameraPermission by remember {
         mutableStateOf(
@@ -98,13 +100,21 @@ fun ScannerScreen(
                 scannerMode = state.scannerMode,
                 pageMode = state.pageMode,
                 scannedPageCount = state.scannedPages.size,
+                isCapturePipelineRunning = state.isPipelineRunning,
+                captureOverlay = captureOverlay,
+                latestThumbnail = state.scannedPages.lastOrNull()
+                    ?.processedBitmap
+                    ?.asImageBitmap(),
                 detectionState = detectionState,
                 onDetectionUpdated = viewModel::onDetectionUpdated,
                 shouldAutoCapture = viewModel::shouldAutoCapture,
                 onImageCaptured = { file -> viewModel.processCapturedImage(file) },
+                onMultiCaptureShutter = { viewModel.beginMultiCaptureOverlay() },
+                onCaptureFreezeFrameReady = { frame -> viewModel.applyCaptureFreezeFrame(frame) },
                 onToggleScannerMode = viewModel::toggleScannerMode,
                 onTogglePageMode = viewModel::togglePageMode,
                 onReviewPages = viewModel::onReviewPages,
+                onCaptureAnimationStepFinished = viewModel::onCaptureAnimationStepFinished,
                 onClose = onNavigateBack
             )
         }

@@ -13,15 +13,20 @@ import dev.sonle.pdfscanner.core.util.OpenCVScanner
 import dev.sonle.pdfscanner.domain.model.RecentScan
 import dev.sonle.pdfscanner.domain.usecase.AddRecentScanUseCase
 import dev.sonle.pdfscanner.domain.usecase.SavePdfUseCase
+import dev.sonle.pdfscanner.presentation.features.scanner.model.CaptureAnimationPhase
 import dev.sonle.pdfscanner.presentation.features.scanner.model.ImageFilter
+import dev.sonle.pdfscanner.presentation.features.scanner.model.MultiCaptureOverlayState
 import dev.sonle.pdfscanner.presentation.features.scanner.model.PageMode
 import dev.sonle.pdfscanner.presentation.features.scanner.model.ScannedPage
 import dev.sonle.pdfscanner.presentation.features.scanner.model.ScannerMode
+import dev.sonle.pdfscanner.presentation.features.scanner.util.CaptureBitmapScaler
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -33,7 +38,9 @@ sealed interface ScannerUiState {
     data class Camera(
         val scannerMode: ScannerMode = ScannerMode.AUTO,
         val pageMode: PageMode = PageMode.SINGLE,
-        val scannedPages: List<ScannedPage> = emptyList()
+        val scannedPages: List<ScannedPage> = emptyList(),
+        /** Multi-page: document pipeline runs while camera stays visible (no full-screen blocking UI). */
+        val isPipelineRunning: Boolean = false
     ) : ScannerUiState
 
     data class CropEditor(
@@ -86,8 +93,16 @@ class ScannerViewModel(
     private val _detection = MutableStateFlow(DetectionUiState())
     val detection: StateFlow<DetectionUiState> = _detection.asStateFlow()
 
+    private val _captureOverlay = MutableStateFlow<MultiCaptureOverlayState>(
+        MultiCaptureOverlayState.Idle
+    )
+    val captureOverlay: StateFlow<MultiCaptureOverlayState> = _captureOverlay.asStateFlow()
+
     // Accumulated pages for multi-page mode
     private val scannedPages = mutableListOf<ScannedPage>()
+
+    private var pendingMultiCapturePage: ScannedPage? = null
+    private var liftingUiComplete = false
 
     // Persisted mode across captures
     private var currentScannerMode = ScannerMode.AUTO
@@ -113,11 +128,13 @@ class ScannerViewModel(
     }
 
     fun togglePageMode() {
+        val currentState = _uiState.value
+        if (CaptureAnimationCoordinator.isCaptureLocked(_captureOverlay.value)) return
+        if (currentState is ScannerUiState.Camera && currentState.isPipelineRunning) return
         currentPageMode = when (currentPageMode) {
             PageMode.SINGLE -> PageMode.MULTI
             PageMode.MULTI -> PageMode.SINGLE
         }
-        val currentState = _uiState.value
         if (currentState is ScannerUiState.Camera) {
             _uiState.value = currentState.copy(pageMode = currentPageMode)
         }
@@ -138,24 +155,107 @@ class ScannerViewModel(
     }
 
     fun shouldAutoCapture(): Boolean {
-        if (_uiState.value !is ScannerUiState.Camera) return false
+        val camera = _uiState.value as? ScannerUiState.Camera ?: return false
+        if (CaptureAnimationCoordinator.isCaptureLocked(_captureOverlay.value)) return false
+        if (camera.isPipelineRunning) return false
         if (currentScannerMode != ScannerMode.AUTO) return false
         if (!_detection.value.isStable || !autoCaptureArmed) return false
         autoCaptureArmed = false
         return true
     }
 
+    /**
+     * Called at shutter time in multi mode so the overlay can show a frozen preview frame
+     * before the high-resolution capture file is decoded.
+     */
+    fun beginMultiCaptureOverlay() {
+        val cam = _uiState.value as? ScannerUiState.Camera ?: return
+        if (currentPageMode != PageMode.MULTI) return
+        if (CaptureAnimationCoordinator.isCaptureLocked(_captureOverlay.value)) return
+        val initialQuad = _detection.value.quad?.takeIf { isQuadSane(it) }
+            ?: CropProcessor.defaultQuad()
+        val sessionId = System.nanoTime()
+        liftingUiComplete = false
+        pendingMultiCapturePage = null
+        _captureOverlay.value = MultiCaptureOverlayState.Active(
+            sessionId = sessionId,
+            phase = CaptureAnimationPhase.Detecting,
+            quad = initialQuad,
+            sourceBitmap = null
+        )
+        setCaptureLock(true)
+    }
+
+    fun applyCaptureFreezeFrame(freezeFrame: Bitmap?) {
+        if (freezeFrame == null) return
+        val active = _captureOverlay.value as? MultiCaptureOverlayState.Active
+        if (active == null) {
+            freezeFrame.recycle()
+            return
+        }
+        viewModelScope.launch {
+            val prepared = withContext(Dispatchers.Default) {
+                prepareOverlayBitmap(freezeFrame, useFreezePreviewSize = true)
+            }
+            val current = _captureOverlay.value as? MultiCaptureOverlayState.Active ?: run {
+                prepared?.recycle()
+                return@launch
+            }
+            updateCaptureOverlay { state ->
+                val previous = state.sourceBitmap
+                if (previous != null && previous !== prepared) {
+                    previous.recycle()
+                }
+                state.copy(sourceBitmap = prepared)
+            }
+        }
+    }
+
+    fun onCaptureAnimationStepFinished(phase: CaptureAnimationPhase) {
+        val active = _captureOverlay.value as? MultiCaptureOverlayState.Active ?: return
+        when (phase) {
+            CaptureAnimationPhase.Lifting -> {
+                liftingUiComplete = true
+                tryAdvanceToFlattening()
+            }
+            CaptureAnimationPhase.Detecting,
+            CaptureAnimationPhase.Flattening -> {
+                val current = _captureOverlay.value as? MultiCaptureOverlayState.Active ?: return
+                val next = CaptureAnimationCoordinator.nextPhaseAfterUiStep(phase, current) ?: return
+                _captureOverlay.value = current.copy(phase = next)
+            }
+            CaptureAnimationPhase.FlyingToStack -> {
+                commitMultiCaptureAndFinish()
+            }
+        }
+    }
+
     // ─── Image Capture → Crop Editor ─────────────────────────────────────────
 
     fun processCapturedImage(file: File) {
         editingPageIndex = null
+        val pageModeAtCapture = currentPageMode
+        val useMultiOverlay = !opensPageReviewAfterNewPageCommitted(pageModeAtCapture)
         viewModelScope.launch {
-            _uiState.value = ScannerUiState.Processing
+            if (useMultiOverlay) {
+                val cam = _uiState.value as? ScannerUiState.Camera
+                if (cam == null) {
+                    if (file.exists()) file.delete()
+                    return@launch
+                }
+                if (!CaptureAnimationCoordinator.isCaptureLocked(_captureOverlay.value)) {
+                    beginMultiCaptureOverlay()
+                }
+            } else {
+                _uiState.value = ScannerUiState.Processing
+            }
             try {
                 val bitmap = withContext(Dispatchers.IO) {
                     BitmapFactory.decodeFile(file.absolutePath)
                 }
+                ensureActive()
                 if (bitmap == null) {
+                    clearCaptureOverlay()
                     _uiState.value = ScannerUiState.Error("Failed to decode image")
                     return@launch
                 }
@@ -168,46 +268,34 @@ class ScannerViewModel(
                     }.getOrDefault(ExifInterface.ORIENTATION_UNDEFINED)
                 }
                 val normalizedBitmap = applyExifOrientation(bitmap, exifOrientation)
+                ensureActive()
 
-                // Detect document corners
                 val corners = withContext(Dispatchers.Default) {
                     OpenCVScanner.findDocumentCorners(normalizedBitmap)
                 }
+                ensureActive()
 
-                val detectedQuadRaw = corners?.let { cornerList ->
-                    val sorted = sortCorners(cornerList)
-                    DocumentQuad(
-                        tl = NormalizedPoint(
-                            (sorted[0].x / normalizedBitmap.width).toFloat(),
-                            (sorted[0].y / normalizedBitmap.height).toFloat()
-                        ),
-                        tr = NormalizedPoint(
-                            (sorted[1].x / normalizedBitmap.width).toFloat(),
-                            (sorted[1].y / normalizedBitmap.height).toFloat()
-                        ),
-                        br = NormalizedPoint(
-                            (sorted[2].x / normalizedBitmap.width).toFloat(),
-                            (sorted[2].y / normalizedBitmap.height).toFloat()
-                        ),
-                        bl = NormalizedPoint(
-                            (sorted[3].x / normalizedBitmap.width).toFloat(),
-                            (sorted[3].y / normalizedBitmap.height).toFloat()
-                        ),
-                        confidence = 1f
-                    )
+                val editableQuad = resolveEditableQuad(corners, normalizedBitmap)
+
+                if (useMultiOverlay) {
+                    val displaySource = CaptureBitmapScaler.downscaleForOverlay(normalizedBitmap)
+                    updateCaptureOverlay { active ->
+                        val previous = active.sourceBitmap
+                        if (previous != null && previous !== displaySource) {
+                            previous.recycle()
+                        }
+                        active.copy(sourceBitmap = displaySource)
+                    }
                 }
-                val detectedQuad = detectedQuadRaw?.takeIf { isQuadSane(it) }
-                val cameraQuad = _detection.value.quad?.takeIf { isQuadSane(it) }
-                val editableQuad = detectedQuad ?: cameraQuad ?: CropProcessor.defaultQuad()
 
-                // For both SINGLE and MULTI, show Review after capture with a cropped preview.
-                // User enters edit flow explicitly from Review via "Edit".
                 val cropped = withContext(Dispatchers.Default) {
                     CropProcessor.cropAndTransform(normalizedBitmap, editableQuad)
                 }
                 val defaultFiltered = withContext(Dispatchers.Default) {
                     ImageFilterProcessor.applySharpen(cropped)
                 }
+                ensureActive()
+
                 val page = ScannedPage(
                     originalBitmap = normalizedBitmap,
                     processedBitmap = defaultFiltered,
@@ -215,6 +303,17 @@ class ScannerViewModel(
                     filter = ImageFilter.SHARPEN,
                     rotation = 0
                 )
+
+                if (useMultiOverlay) {
+                    pendingMultiCapturePage = page
+                    val displayProcessed = CaptureBitmapScaler.downscaleForOverlay(defaultFiltered)
+                    updateCaptureOverlay { active ->
+                        active.copy(processedBitmap = displayProcessed)
+                    }
+                    tryAdvanceToFlattening()
+                    return@launch
+                }
+
                 val selectedIndex = pendingInsertIndex
                     ?.coerceIn(0, scannedPages.size)
                     ?.also { insertIndex ->
@@ -228,10 +327,12 @@ class ScannerViewModel(
                 _uiState.value = ScannerUiState.PageReview(
                     pages = scannedPages.toList(),
                     selectedPageIndex = selectedIndex,
-                    pageMode = currentPageMode
+                    pageMode = pageModeAtCapture
                 )
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Timber.e(e, "Error processing captured image")
+                clearCaptureOverlay()
                 _uiState.value = ScannerUiState.Error(e.message ?: "Unknown error")
             } finally {
                 if (file.exists()) file.delete()
@@ -379,6 +480,7 @@ class ScannerViewModel(
             rotation = state.rotation
         )
 
+        val wasEditingExistingPage = editingPageIndex != null
         val editIndex = editingPageIndex
         if (editIndex != null && editIndex in scannedPages.indices) {
             scannedPages[editIndex] = page
@@ -387,21 +489,17 @@ class ScannerViewModel(
         }
         editingPageIndex = null
 
-        when (currentPageMode) {
-            PageMode.SINGLE -> {
-                _uiState.value = ScannerUiState.PageReview(
-                    pages = scannedPages.toList(),
-                    selectedPageIndex = scannedPages.lastIndex,
-                    pageMode = currentPageMode
-                )
-            }
-            PageMode.MULTI -> {
-                _uiState.value = ScannerUiState.PageReview(
-                    pages = scannedPages.toList(),
-                    selectedPageIndex = scannedPages.lastIndex,
-                    pageMode = currentPageMode
-                )
-            }
+        val openReview = opensPageReviewAfterFilterConfirm(currentPageMode, wasEditingExistingPage)
+        if (openReview) {
+            val selectedIndex = editIndex?.takeIf { it in scannedPages.indices }
+                ?: scannedPages.lastIndex
+            _uiState.value = ScannerUiState.PageReview(
+                pages = scannedPages.toList(),
+                selectedPageIndex = selectedIndex,
+                pageMode = currentPageMode
+            )
+        } else {
+            goBackToCamera()
         }
     }
 
@@ -471,6 +569,9 @@ class ScannerViewModel(
     }
 
     fun onReviewPages() {
+        val cam = _uiState.value as? ScannerUiState.Camera ?: return
+        if (CaptureAnimationCoordinator.isCaptureLocked(_captureOverlay.value)) return
+        if (cam.isPipelineRunning) return
         if (scannedPages.isNotEmpty()) {
             _uiState.value = ScannerUiState.PageReview(
                 pages = scannedPages.toList(),
@@ -544,7 +645,8 @@ class ScannerViewModel(
         _uiState.value = ScannerUiState.Camera(
             scannerMode = currentScannerMode,
             pageMode = currentPageMode,
-            scannedPages = scannedPages.toList()
+            scannedPages = scannedPages.toList(),
+            isPipelineRunning = false
         )
     }
 
@@ -552,6 +654,9 @@ class ScannerViewModel(
         scannedPages.clear()
         editingPageIndex = null
         pendingInsertIndex = null
+        pendingMultiCapturePage = null
+        liftingUiComplete = false
+        clearCaptureOverlay()
         autoCaptureArmed = true
         _detection.value = DetectionUiState()
         _uiState.value = ScannerUiState.Camera(
@@ -621,5 +726,99 @@ class ScannerViewModel(
     private fun isQuadSane(quad: DocumentQuad): Boolean {
         val area = quadArea(quad)
         return area in 0.02f..0.98f
+    }
+
+    private fun resolveEditableQuad(
+        corners: List<org.opencv.core.Point>?,
+        normalizedBitmap: Bitmap
+    ): DocumentQuad {
+        val detectedQuadRaw = corners?.let { cornerList ->
+            val sorted = sortCorners(cornerList)
+            DocumentQuad(
+                tl = NormalizedPoint(
+                    (sorted[0].x / normalizedBitmap.width).toFloat(),
+                    (sorted[0].y / normalizedBitmap.height).toFloat()
+                ),
+                tr = NormalizedPoint(
+                    (sorted[1].x / normalizedBitmap.width).toFloat(),
+                    (sorted[1].y / normalizedBitmap.height).toFloat()
+                ),
+                br = NormalizedPoint(
+                    (sorted[2].x / normalizedBitmap.width).toFloat(),
+                    (sorted[2].y / normalizedBitmap.height).toFloat()
+                ),
+                bl = NormalizedPoint(
+                    (sorted[3].x / normalizedBitmap.width).toFloat(),
+                    (sorted[3].y / normalizedBitmap.height).toFloat()
+                ),
+                confidence = 1f
+            )
+        }
+        val detectedQuad = detectedQuadRaw?.takeIf { isQuadSane(it) }
+        val cameraQuad = _detection.value.quad?.takeIf { isQuadSane(it) }
+        return detectedQuad ?: cameraQuad ?: CropProcessor.defaultQuad()
+    }
+
+    private fun setCaptureLock(locked: Boolean) {
+        val cam = _uiState.value as? ScannerUiState.Camera ?: return
+        _uiState.value = cam.copy(isPipelineRunning = locked)
+    }
+
+    private fun updateCaptureOverlay(
+        transform: (MultiCaptureOverlayState.Active) -> MultiCaptureOverlayState.Active
+    ) {
+        val active = _captureOverlay.value as? MultiCaptureOverlayState.Active ?: return
+        _captureOverlay.value = transform(active)
+    }
+
+    private fun tryAdvanceToFlattening() {
+        if (!liftingUiComplete) return
+        val active = _captureOverlay.value as? MultiCaptureOverlayState.Active ?: return
+        if (active.phase != CaptureAnimationPhase.Lifting) return
+        if (!CaptureAnimationCoordinator.canStartFlattenAnimation(active)) return
+        _captureOverlay.value = active.copy(phase = CaptureAnimationPhase.Flattening)
+    }
+
+    private fun commitMultiCaptureAndFinish() {
+        val page = pendingMultiCapturePage
+        if (page != null) {
+            pendingInsertIndex
+                ?.coerceIn(0, scannedPages.size)
+                ?.also { insertIndex -> scannedPages.add(insertIndex, page) }
+                ?: scannedPages.add(page)
+            pendingInsertIndex = null
+        }
+        pendingMultiCapturePage = null
+        liftingUiComplete = false
+        clearCaptureOverlay()
+        goBackToCamera()
+    }
+
+    private fun clearCaptureOverlay() {
+        val active = _captureOverlay.value as? MultiCaptureOverlayState.Active
+        active?.sourceBitmap?.recycle()
+        active?.processedBitmap?.let { bmp ->
+            if (bmp !== active.sourceBitmap) bmp.recycle()
+        }
+        _captureOverlay.value = MultiCaptureOverlayState.Idle
+        setCaptureLock(false)
+        liftingUiComplete = false
+        pendingMultiCapturePage = null
+    }
+
+    private fun prepareOverlayBitmap(
+        frame: Bitmap?,
+        useFreezePreviewSize: Boolean = false
+    ): Bitmap? {
+        if (frame == null) return null
+        val scaled = if (useFreezePreviewSize) {
+            CaptureBitmapScaler.downscaleForFreezePreview(frame)
+        } else {
+            CaptureBitmapScaler.downscaleForOverlay(frame)
+        }
+        if (scaled !== frame) {
+            frame.recycle()
+        }
+        return scaled
     }
 }

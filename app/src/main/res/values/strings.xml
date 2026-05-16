@@ -66,12 +66,16 @@
     <!-- Scanner Screen -->
     <string name="scanner_action_scan">SCAN</string>
     <string name="scanner_processing">Đang xử lý tài liệu…</string>
+    <string name="scanner_processing_page_background">Đang thêm trang…</string>
     <string name="scanner_saved_file_label">Đã lưu file tại:</string>
     <string name="scanner_continue_scan">Tiếp tục quét</string>
     <string name="scanner_back_home">Về trang chủ</string>
     <string name="scanner_error_prefix">Lỗi: %1$s</string>
     <string name="scanner_camera_permission_required">Cần quyền Camera để tiếp tục.</string>
     <string name="scanner_capture_again">Chụp lại</string>
+    <string name="scanner_capture_detecting">Đang nhận diện tài liệu…</string>
+    <string name="scanner_capture_flattening">Đang làm phẳng trang…</string>
+    <string name="scanner_capture_saving_page">Đang thêm vào bộ sưu tập…</string>
     <string name="scanner_save_pdf">Lưu PDF</string>
 
     <!-- Scanner Mode -->
