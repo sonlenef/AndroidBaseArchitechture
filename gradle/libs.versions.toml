@@ -32,6 +32,7 @@ coroutines = "1.9.0"
 mockk = "1.13.8"
 turbine = "1.0.0"
 archCore = "2.2.0"
+robolectric = "4.14.1"
 composeTest = "1.7.4"
 camerax = "1.4.1"
 opencv = "4.10.0"
@@ -105,7 +106,8 @@ mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "mockk" }
 turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
 arch-core-testing = { group = "androidx.arch.core", name = "core-testing", version.ref = "archCore" }
-# Koin Testing (optional later)
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+room-testing = { group = "androidx.room", name = "room-testing", version.ref = "room" }
 
 # Other
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }

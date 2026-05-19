@@ -5,37 +5,27 @@ import dev.sonle.pdfscanner.core.config.RemoteConfigManager
 import dev.sonle.pdfscanner.core.crashlytics.CrashlyticsManager
 import dev.sonle.pdfscanner.core.fcm.NotificationHelper
 import dev.sonle.pdfscanner.core.performance.PerformanceMonitor
-import dev.sonle.pdfscanner.data.local.UserLocalDataSource
-import dev.sonle.pdfscanner.data.remote.UserRemoteDataSource
-import dev.sonle.pdfscanner.domain.usecase.GetUserByIdUseCase
-import dev.sonle.pdfscanner.domain.usecase.GetUsersUseCase
-import dev.sonle.pdfscanner.domain.usecase.LoginUseCase
-import dev.sonle.pdfscanner.domain.usecase.RefreshUsersUseCase
-import dev.sonle.pdfscanner.domain.usecase.UpdateFavoriteStatusUseCase
-import dev.sonle.pdfscanner.domain.usecase.UpdateUserUseCase
 import dev.sonle.pdfscanner.domain.usecase.SavePdfUseCase
 import dev.sonle.pdfscanner.domain.usecase.ObserveRecentScansUseCase
 import dev.sonle.pdfscanner.domain.usecase.DeleteRecentScanUseCase
 import dev.sonle.pdfscanner.domain.usecase.AddRecentScanUseCase
+import dev.sonle.pdfscanner.domain.usecase.ClearAllScanDataUseCase
+import dev.sonle.pdfscanner.domain.usecase.GetScanStorageInfoUseCase
+import dev.sonle.pdfscanner.domain.usecase.ObserveAppSettingsUseCase
+import dev.sonle.pdfscanner.domain.usecase.UpdateAppSettingsUseCase
+import dev.sonle.pdfscanner.presentation.features.main.settings.SettingsViewModel
 import dev.sonle.pdfscanner.presentation.features.main.home.HomeViewModel
+import dev.sonle.pdfscanner.presentation.features.scanner.ScannerSaveCoordinator
 import dev.sonle.pdfscanner.presentation.features.scanner.ScannerViewModel
 import org.koin.androidx.viewmodel.dsl.viewModelOf
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
-import dev.sonle.pdfscanner.core.ai.GeminiNanoManager
-import dev.sonle.pdfscanner.core.ai.OnDeviceAiManager
-import dev.sonle.pdfscanner.domain.usecase.ai.SummarizeUserUseCase
-import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
 /**
  * Main application module for Koin DI
  */
 val appModule = module {
-    // Data Sources
-    singleOf(::UserLocalDataSource)
-    singleOf(::UserRemoteDataSource)
-
     // Managers / Helpers
     singleOf(::AnalyticsManager)
     singleOf(::CrashlyticsManager)
@@ -44,23 +34,20 @@ val appModule = module {
     singleOf(::NotificationHelper)
 
     // Use Cases
-    factoryOf(::GetUserByIdUseCase)
-    factoryOf(::GetUsersUseCase)
-    factoryOf(::LoginUseCase)
-    factoryOf(::RefreshUsersUseCase)
-    factoryOf(::UpdateFavoriteStatusUseCase)
-    factoryOf(::UpdateUserUseCase)
     factoryOf(::SavePdfUseCase)
     factoryOf(::ObserveRecentScansUseCase)
     factoryOf(::DeleteRecentScanUseCase)
     factoryOf(::AddRecentScanUseCase)
+    factoryOf(::ObserveAppSettingsUseCase)
+    factoryOf(::UpdateAppSettingsUseCase)
+    factoryOf(::GetScanStorageInfoUseCase)
+    factoryOf(::ClearAllScanDataUseCase)
 
-
-    // AI
-    single<OnDeviceAiManager> { GeminiNanoManager(androidContext()) }
-    factoryOf(::SummarizeUserUseCase)
+    // Scanner coordinators
+    factoryOf(::ScannerSaveCoordinator)
 
     // ViewModels
     viewModelOf(::HomeViewModel)
+    viewModelOf(::SettingsViewModel)
     viewModelOf(::ScannerViewModel)
 }

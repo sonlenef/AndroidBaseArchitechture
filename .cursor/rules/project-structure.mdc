@@ -1,6 +1,6 @@
 ---
 alwaysApply: true
-description: Project structure and architecture guidelines for the Android Compose base application
+description: Project structure and architecture guidelines for the PDF Scanner Android app
 ---
 
 # Project Structure and Architecture
@@ -9,51 +9,53 @@ description: Project structure and architecture guidelines for the Android Compo
 
 This project follows **Clean Architecture** with **MVVM** pattern:
 
-- **Domain Layer** (`domain/`): Business logic, entities, use cases, repository interfaces
+- **Domain Layer** (`domain/`): Business logic, entities, use cases, repository interfaces (no Android framework types)
 - **Data Layer** (`data/`): Repository implementations, data sources (local/remote), DTOs
 - **Presentation Layer** (`presentation/`): UI components, ViewModels, screens, navigation
 
 ## Directory Structure
 
 ```
-app/src/main/java/com/example/baseapp/
+app/src/main/java/dev/sonle/pdfscanner/
 ├── core/                          # Core functionality
-│   ├── di/                        # Dependency injection modules
-│   ├── network/                   # Network utilities
-│   ├── database/                  # Database configuration
+│   ├── di/                        # Koin dependency injection modules
+│   ├── network/                   # Network utilities (optional / legacy)
+│   ├── database/                  # Room database configuration
+│   ├── scanner/                   # Document detection & image processing
 │   └── util/                      # Utility classes
 ├── data/                          # Data layer
 │   ├── local/                     # Local data sources (Room)
-│   ├── remote/                    # Remote data sources (Retrofit)
+│   ├── remote/                    # Remote data sources (if used)
 │   ├── model/                     # DTOs and Entities
 │   └── repository/                # Repository implementations
 ├── domain/                        # Domain layer
 │   ├── model/                     # Domain models
 │   ├── repository/                # Repository interfaces
+│   ├── navigation/                # Typed navigation routes
 │   └── usecase/                   # Use cases
 └── presentation/                  # Presentation layer
     ├── components/                # Reusable UI components
-    ├── features/                  # Feature modules
-    ├── navigation/                # Navigation logic
-    ├── theme/                     # Theme and styling
-    └── util/                      # Presentation utilities
+    ├── features/                  # Feature modules (main, scanner, viewer)
+    ├── navigation/                # Navigation graph & Navigator
+    └── theme/                     # Theme and styling
 ```
 
 ## Key Files
 
-- Main entry: [MainActivity.kt](mdc:app/src/main/java/com/example/baseapp/MainActivity.kt)
-- Application: [MyApplication.kt](mdc:app/src/main/java/com/example/baseapp/MyApplication.kt)
+- Main entry: [MainActivity.kt](mdc:app/src/main/java/dev/sonle/pdfscanner/MainActivity.kt)
+- Application: [MyApplication.kt](mdc:app/src/main/java/dev/sonle/pdfscanner/MyApplication.kt)
+- Navigation: [AppNavigation.kt](mdc:app/src/main/java/dev/sonle/pdfscanner/presentation/navigation/AppNavigation.kt)
 - Dependencies: [libs.versions.toml](mdc:gradle/libs.versions.toml)
 - Build configuration: [build.gradle.kts](mdc:app/build.gradle.kts)
 
 ## Technology Stack
 
 - **UI**: Jetpack Compose with Material 3
-- **Navigation**: Voyager
-- **DI**: Hilt
-- **Network**: Retrofit + Gson
+- **Navigation**: Navigation Compose 2.8+ with Kotlin Serialization (type-safe routes)
+- **DI**: Koin
 - **Database**: Room
 - **Async**: Kotlin Coroutines + Flow
+- **Document pipeline**: OpenCV, TFLite edge detection
 - **Testing**: JUnit, MockK, Compose Test, Turbine
 
 ## Architecture Principles
@@ -64,3 +66,7 @@ app/src/main/java/com/example/baseapp/
 4. **Testability**: All layers are independently testable
 5. **Reactive**: Use Flow for data streams
 6. **Responsive**: Support multiple screen sizes (phones, tablets, foldables)
+
+## Product scope
+
+Primary user flow: **Home → Scanner (capture / crop / filter / review) → Save PDF → Recent scans → PDF viewer**.

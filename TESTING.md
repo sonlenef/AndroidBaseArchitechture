@@ -165,8 +165,8 @@ This document describes the comprehensive testing strategy implemented for the A
 
 ### Specific Test Classes
 ```bash
-./gradlew test --tests "com.example.baseapp.presentation.features.login.LoginViewModelTest"
-./gradlew connectedAndroidTest --tests "com.example.baseapp.presentation.features.login.LoginScreenTest"
+./gradlew test --tests "dev.sonle.pdfscanner.presentation.features.scanner.ScannerViewModelTest"
+./gradlew connectedAndroidTest --tests "dev.sonle.pdfscanner.MainNavigationSmokeTest"
 ```
 
 ## Test Reports

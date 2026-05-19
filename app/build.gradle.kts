@@ -119,6 +119,15 @@ android {
     androidResources {
         noCompress += "tflite"
     }
+
+    testOptions {
+        unitTests.all {
+            it.jvmArgs(
+                "-XX:+EnableDynamicAgentLoading",
+                "-Djdk.attach.allowAttachSelf=true"
+            )
+        }
+    }
 }
 
 dependencies {
@@ -194,6 +203,8 @@ dependencies {
     testImplementation(libs.turbine)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.arch.core.testing)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.room.testing)
 
     // Android Testing
     androidTestImplementation(libs.androidx.junit)

@@ -6,5 +6,15 @@ import kotlinx.coroutines.flow.Flow
 interface RecentScanRepository {
     fun observeRecentScans(): Flow<List<RecentScan>>
     suspend fun upsertRecentScan(recentScan: RecentScan)
-    suspend fun deleteRecentScanById(id: Long)
+    suspend fun findRecentScanById(id: Long): RecentScan?
+    suspend fun deleteRecentScanById(id: Long): RecentScanDeleteResult
+}
+
+sealed class RecentScanDeleteResult {
+    data object Success : RecentScanDeleteResult()
+    data object NotFound : RecentScanDeleteResult()
+    data class PartialFailure(
+        val removedFromDatabase: Boolean,
+        val fileDeleted: Boolean
+    ) : RecentScanDeleteResult()
 }

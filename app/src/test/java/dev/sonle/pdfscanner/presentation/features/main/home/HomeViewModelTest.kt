@@ -2,8 +2,10 @@ package dev.sonle.pdfscanner.presentation.features.main.home
 
 import app.cash.turbine.test
 import dev.sonle.pdfscanner.domain.model.RecentScan
+import dev.sonle.pdfscanner.domain.repository.RecentScanDeleteResult
 import dev.sonle.pdfscanner.domain.usecase.DeleteRecentScanUseCase
 import dev.sonle.pdfscanner.domain.usecase.ObserveRecentScansUseCase
+import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
@@ -30,7 +32,8 @@ class HomeViewModelTest {
     fun setup() {
         Dispatchers.setMain(dispatcher)
         observeRecentScansUseCase = mockk()
-        deleteRecentScanUseCase = mockk(relaxed = true)
+        deleteRecentScanUseCase = mockk()
+        coEvery { deleteRecentScanUseCase(any()) } returns RecentScanDeleteResult.Success
     }
 
     @After

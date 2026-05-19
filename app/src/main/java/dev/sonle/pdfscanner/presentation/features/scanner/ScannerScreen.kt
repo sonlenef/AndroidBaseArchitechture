@@ -164,7 +164,7 @@ fun ScannerScreen(
 
         is ScannerUiState.SaveSuccess -> {
             SaveSuccessView(
-                filePath = state.file.absolutePath,
+                filePath = state.exported.absolutePath,
                 onContinue = viewModel::reset,
                 onBackHome = {
                     viewModel.reset()
@@ -175,7 +175,7 @@ fun ScannerScreen(
 
         is ScannerUiState.Error -> {
             ErrorView(
-                message = state.message,
+                message = stringResource(state.messageResId),
                 onRetry = viewModel::reset
             )
         }

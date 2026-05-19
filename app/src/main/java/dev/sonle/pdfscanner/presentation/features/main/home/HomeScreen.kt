@@ -105,14 +105,14 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        uiState.errorMessage?.let {
+        uiState.errorMessageRes?.let { messageRes ->
             Text(
-                text = stringResource(R.string.main_recent_action_failed),
+                text = stringResource(messageRes),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
-            LaunchedEffect(it) {
+            LaunchedEffect(messageRes) {
                 viewModel.clearError()
             }
         }

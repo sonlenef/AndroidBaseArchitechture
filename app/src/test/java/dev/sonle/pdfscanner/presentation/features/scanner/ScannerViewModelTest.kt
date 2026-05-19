@@ -3,14 +3,16 @@ package dev.sonle.pdfscanner.presentation.features.scanner
 import dev.sonle.pdfscanner.core.scanner.model.DocumentQuad
 import dev.sonle.pdfscanner.core.scanner.model.NormalizedPoint
 import dev.sonle.pdfscanner.core.util.OpenCVScanner
-import dev.sonle.pdfscanner.domain.usecase.AddRecentScanUseCase
-import dev.sonle.pdfscanner.domain.usecase.SavePdfUseCase
 import dev.sonle.pdfscanner.presentation.features.scanner.model.CaptureAnimationPhase
 import dev.sonle.pdfscanner.presentation.features.scanner.model.MultiCaptureOverlayState
+import dev.sonle.pdfscanner.domain.model.AppSettings
+import dev.sonle.pdfscanner.domain.usecase.ObserveAppSettingsUseCase
 import dev.sonle.pdfscanner.presentation.features.scanner.model.PageMode
+import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -19,25 +21,24 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-
 @OptIn(ExperimentalCoroutinesApi::class)
 class ScannerViewModelTest {
 
     private lateinit var viewModel: ScannerViewModel
-    private lateinit var savePdfUseCase: SavePdfUseCase
-    private lateinit var addRecentScanUseCase: AddRecentScanUseCase
+    private lateinit var saveCoordinator: ScannerSaveCoordinator
+    private lateinit var observeAppSettingsUseCase: ObserveAppSettingsUseCase
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        savePdfUseCase = mockk(relaxed = true)
-        addRecentScanUseCase = mockk(relaxed = true)
-        viewModel = ScannerViewModel(savePdfUseCase, addRecentScanUseCase)
+        saveCoordinator = mockk(relaxed = true)
+        observeAppSettingsUseCase = mockk()
+        every { observeAppSettingsUseCase() } returns flowOf(AppSettings.Default)
+        viewModel = ScannerViewModel(saveCoordinator, observeAppSettingsUseCase)
         mockkObject(OpenCVScanner)
     }
 
@@ -79,6 +80,7 @@ class ScannerViewModelTest {
         viewModel.onDetectionUpdated(quad, 1f, true)
 
         assertTrue(viewModel.shouldAutoCapture())
-        assertFalse(viewModel.shouldAutoCapture())
+        assertTrue(!viewModel.shouldAutoCapture())
     }
+
 }

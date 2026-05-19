@@ -1,17 +1,18 @@
 package dev.sonle.pdfscanner.core.di
 
-import dev.sonle.pdfscanner.data.local.UserLocalDataSource
-import dev.sonle.pdfscanner.data.remote.UserRemoteDataSource
-import dev.sonle.pdfscanner.domain.repository.UserRepository
-import io.mockk.mockk
+import dev.sonle.pdfscanner.domain.repository.RecentScanRepository
+import dev.sonle.pdfscanner.domain.repository.ScannerRepository
 import org.junit.After
 import org.junit.Assert.assertNotNull
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
-import org.koin.core.module.Module
-import org.koin.dsl.module
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 
+@RunWith(RobolectricTestRunner::class)
 class RepositoryModuleTest {
 
     @After
@@ -20,21 +21,16 @@ class RepositoryModuleTest {
     }
 
     @Test
-    fun `repository module should resolve UserRepository with IoDispatcher`() {
-        val testDataModule: Module = module {
-            single { mockk<UserLocalDataSource>(relaxed = true) }
-            single { mockk<UserRemoteDataSource>(relaxed = true) }
+    fun `repository module should resolve scanner and recent scan repositories`() {
+        val context = RuntimeEnvironment.getApplication()
+
+        startKoin {
+            androidContext(context)
+            modules(databaseModule, repositoryModule)
         }
 
-        val koinApp = startKoin {
-            modules(
-                dispatcherModule,
-                repositoryModule,
-                testDataModule
-            )
-        }
-
-        val userRepository = koinApp.koin.get<UserRepository>()
-        assertNotNull(userRepository)
+        val koin = org.koin.java.KoinJavaComponent.getKoin()
+        assertNotNull(koin.get<ScannerRepository>())
+        assertNotNull(koin.get<RecentScanRepository>())
     }
 }

@@ -10,21 +10,27 @@ import dev.sonle.pdfscanner.core.scanner.model.NormalizedPoint
 import dev.sonle.pdfscanner.core.scanner.processing.CropProcessor
 import dev.sonle.pdfscanner.core.scanner.processing.ImageFilterProcessor
 import dev.sonle.pdfscanner.core.util.OpenCVScanner
-import dev.sonle.pdfscanner.domain.model.RecentScan
-import dev.sonle.pdfscanner.domain.usecase.AddRecentScanUseCase
-import dev.sonle.pdfscanner.domain.usecase.SavePdfUseCase
+import dev.sonle.pdfscanner.domain.model.ExportedPdf
+import dev.sonle.pdfscanner.domain.model.PdfExportError
+import dev.sonle.pdfscanner.R
 import dev.sonle.pdfscanner.presentation.features.scanner.model.CaptureAnimationPhase
 import dev.sonle.pdfscanner.presentation.features.scanner.model.ImageFilter
 import dev.sonle.pdfscanner.presentation.features.scanner.model.MultiCaptureOverlayState
 import dev.sonle.pdfscanner.presentation.features.scanner.model.PageMode
 import dev.sonle.pdfscanner.presentation.features.scanner.model.ScannedPage
 import dev.sonle.pdfscanner.presentation.features.scanner.model.ScannerMode
+import dev.sonle.pdfscanner.domain.usecase.ObserveAppSettingsUseCase
+import dev.sonle.pdfscanner.presentation.features.main.settings.ScannerSettingsMapper.toDefaultImageFilter
+import dev.sonle.pdfscanner.presentation.features.main.settings.ScannerSettingsMapper.toPageMode
+import dev.sonle.pdfscanner.presentation.features.main.settings.ScannerSettingsMapper.toScannerMode
 import dev.sonle.pdfscanner.presentation.features.scanner.util.CaptureBitmapScaler
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
@@ -66,9 +72,9 @@ sealed interface ScannerUiState {
 
     object Processing : ScannerUiState
 
-    data class SaveSuccess(val file: File) : ScannerUiState
+    data class SaveSuccess(val exported: ExportedPdf) : ScannerUiState
 
-    data class Error(val message: String) : ScannerUiState
+    data class Error(@androidx.annotation.StringRes val messageResId: Int) : ScannerUiState
 }
 
 // ─── Detection State (for camera overlay) ─────────────────────────────────────
@@ -82,8 +88,8 @@ data class DetectionUiState(
 // ─── ViewModel ─────────────────────────────────────────────────────────────────
 
 class ScannerViewModel(
-    private val savePdfUseCase: SavePdfUseCase,
-    private val addRecentScanUseCase: AddRecentScanUseCase
+    private val saveCoordinator: ScannerSaveCoordinator,
+    observeAppSettingsUseCase: ObserveAppSettingsUseCase
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<ScannerUiState>(
         ScannerUiState.Camera()
@@ -98,6 +104,9 @@ class ScannerViewModel(
     )
     val captureOverlay: StateFlow<MultiCaptureOverlayState> = _captureOverlay.asStateFlow()
 
+    private val _uiEffects = Channel<ScannerUiEffect>(Channel.BUFFERED)
+    val uiEffects = _uiEffects.receiveAsFlow()
+
     // Accumulated pages for multi-page mode
     private val scannedPages = mutableListOf<ScannedPage>()
 
@@ -107,7 +116,19 @@ class ScannerViewModel(
     // Persisted mode across captures
     private var currentScannerMode = ScannerMode.AUTO
     private var currentPageMode = PageMode.SINGLE
+    private var defaultImageFilter = ImageFilter.SHARPEN
     private var autoCaptureArmed = true
+
+    init {
+        viewModelScope.launch {
+            observeAppSettingsUseCase().collect { settings ->
+                currentScannerMode = settings.toScannerMode()
+                currentPageMode = settings.toPageMode()
+                defaultImageFilter = settings.toDefaultImageFilter()
+                syncCameraStateFromDefaults()
+            }
+        }
+    }
 
     // Index of page being edited (null = new page)
     private var editingPageIndex: Int? = null
@@ -256,7 +277,7 @@ class ScannerViewModel(
                 ensureActive()
                 if (bitmap == null) {
                     clearCaptureOverlay()
-                    _uiState.value = ScannerUiState.Error("Failed to decode image")
+                    _uiState.value = ScannerUiState.Error(R.string.scanner_error_decode_failed)
                     return@launch
                 }
                 val exifOrientation = withContext(Dispatchers.IO) {
@@ -292,7 +313,7 @@ class ScannerViewModel(
                     CropProcessor.cropAndTransform(normalizedBitmap, editableQuad)
                 }
                 val defaultFiltered = withContext(Dispatchers.Default) {
-                    ImageFilterProcessor.applySharpen(cropped)
+                    ImageFilterProcessor.applyFilter(cropped, defaultImageFilter)
                 }
                 ensureActive()
 
@@ -300,7 +321,7 @@ class ScannerViewModel(
                     originalBitmap = normalizedBitmap,
                     processedBitmap = defaultFiltered,
                     cropQuad = editableQuad,
-                    filter = ImageFilter.SHARPEN,
+                    filter = defaultImageFilter,
                     rotation = 0
                 )
 
@@ -333,7 +354,7 @@ class ScannerViewModel(
                 if (e is CancellationException) throw e
                 Timber.e(e, "Error processing captured image")
                 clearCaptureOverlay()
-                _uiState.value = ScannerUiState.Error(e.message ?: "Unknown error")
+                _uiState.value = ScannerUiState.Error(R.string.scanner_error_unknown)
             } finally {
                 if (file.exists()) file.delete()
             }
@@ -360,18 +381,18 @@ class ScannerViewModel(
                     CropProcessor.cropAndTransform(state.originalBitmap, state.editableQuad)
                 }
                 val defaultFiltered = withContext(Dispatchers.Default) {
-                    ImageFilterProcessor.applySharpen(cropped)
+                    ImageFilterProcessor.applyFilter(cropped, defaultImageFilter)
                 }
                 _uiState.value = ScannerUiState.FilterEditor(
                     originalBitmap = state.originalBitmap,
                     croppedBitmap = cropped,
-                    selectedFilter = ImageFilter.SHARPEN,
+                    selectedFilter = defaultImageFilter,
                     previewBitmap = defaultFiltered,
                     cropQuad = state.editableQuad
                 )
             } catch (e: Exception) {
                 Timber.e(e, "Error cropping image")
-                _uiState.value = ScannerUiState.Error("Failed to crop: ${e.message}")
+                _uiState.value = ScannerUiState.Error(R.string.scanner_error_crop_failed)
             }
         }
     }
@@ -609,29 +630,37 @@ class ScannerViewModel(
         if (scannedPages.isEmpty()) return
         viewModelScope.launch {
             _uiState.value = ScannerUiState.Processing
-            val pageCount = scannedPages.size
-            val bitmaps = scannedPages.map { it.processedBitmap }
-            val result = savePdfUseCase(bitmaps, "Scan_${System.currentTimeMillis()}.pdf")
-            result.onSuccess { file ->
-                runCatching {
-                    addRecentScanUseCase(
-                        RecentScan(
-                            id = 0,
-                            fileName = file.name,
-                            filePath = file.absolutePath,
-                            pageCount = pageCount,
-                            fileSizeBytes = file.length(),
-                            savedAt = System.currentTimeMillis()
-                        )
-                    )
-                }.onFailure { error ->
-                    Timber.e(error, "Failed to record recent scan metadata")
+            val fileName = "Scan_${System.currentTimeMillis()}.pdf"
+            when (val outcome = saveCoordinator.save(scannedPages.toList(), fileName)) {
+                is ScannerSaveCoordinator.SaveOutcome.Success -> {
+                    _uiState.value = ScannerUiState.SaveSuccess(outcome.exported)
+                    _uiEffects.send(ScannerUiEffect.SaveCompleted(outcome.exported))
                 }
-                _uiState.value = ScannerUiState.SaveSuccess(file)
-            }.onFailure { e ->
-                _uiState.value = ScannerUiState.Error("Failed to save PDF: ${e.message}")
+                is ScannerSaveCoordinator.SaveOutcome.MetadataFailed -> {
+                    _uiState.value = ScannerUiState.SaveSuccess(outcome.exported)
+                    _uiEffects.send(ScannerUiEffect.ShowMessage(R.string.scanner_recent_metadata_failed))
+                    _uiEffects.send(ScannerUiEffect.SaveCompleted(outcome.exported))
+                }
+                is ScannerSaveCoordinator.SaveOutcome.Failure -> {
+                    _uiState.value = ScannerUiState.Error(
+                        messageResId = outcome.error.toMessageResId()
+                    )
+                }
             }
         }
+    }
+
+    private fun PdfExportError.toMessageResId(): Int = when (this) {
+        PdfExportError.EmptyPages -> R.string.scanner_error_empty_pages
+        is PdfExportError.IoFailure -> R.string.scanner_error_save_failed
+    }
+
+    private fun syncCameraStateFromDefaults() {
+        val camera = _uiState.value as? ScannerUiState.Camera ?: return
+        _uiState.value = camera.copy(
+            scannerMode = currentScannerMode,
+            pageMode = currentPageMode
+        )
     }
 
     // ─── Navigation Helpers ──────────────────────────────────────────────────
