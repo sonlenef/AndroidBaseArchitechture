@@ -8,6 +8,7 @@ import dev.sonle.pdfscanner.core.performance.PerformanceMonitor
 import dev.sonle.pdfscanner.domain.usecase.SavePdfUseCase
 import dev.sonle.pdfscanner.domain.usecase.ObserveRecentScansUseCase
 import dev.sonle.pdfscanner.domain.usecase.DeleteRecentScanUseCase
+import dev.sonle.pdfscanner.domain.usecase.DeleteRecentScansUseCase
 import dev.sonle.pdfscanner.domain.usecase.AddRecentScanUseCase
 import dev.sonle.pdfscanner.domain.usecase.ClearAllScanDataUseCase
 import dev.sonle.pdfscanner.domain.usecase.GetScanStorageInfoUseCase
@@ -37,6 +38,7 @@ val appModule = module {
     factoryOf(::SavePdfUseCase)
     factoryOf(::ObserveRecentScansUseCase)
     factoryOf(::DeleteRecentScanUseCase)
+    factoryOf(::DeleteRecentScansUseCase)
     factoryOf(::AddRecentScanUseCase)
     factoryOf(::ObserveAppSettingsUseCase)
     factoryOf(::UpdateAppSettingsUseCase)

@@ -131,7 +131,7 @@ fun FilterEditorView(
         ) {
             Image(
                 bitmap = previewBitmap.asImageBitmap(),
-                contentDescription = "Preview",
+                contentDescription = stringResource(R.string.scanner_filter_preview),
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .fillMaxSize()

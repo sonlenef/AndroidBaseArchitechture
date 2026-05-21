@@ -65,63 +65,87 @@
 
     <!-- Scanner Screen -->
     <string name="scanner_action_scan">SCAN</string>
-    <string name="scanner_processing">Đang xử lý tài liệu…</string>
-    <string name="scanner_processing_page_background">Đang thêm trang…</string>
-    <string name="scanner_saved_file_label">Đã lưu file tại:</string>
-    <string name="scanner_continue_scan">Tiếp tục quét</string>
-    <string name="scanner_back_home">Về trang chủ</string>
-    <string name="scanner_error_prefix">Lỗi: %1$s</string>
-    <string name="scanner_error_empty_pages">Không có trang nào để lưu.</string>
-    <string name="scanner_error_save_failed">Không thể lưu PDF. Vui lòng thử lại.</string>
-    <string name="scanner_error_decode_failed">Không thể đọc ảnh đã chụp.</string>
-    <string name="scanner_error_unknown">Đã xảy ra lỗi không xác định.</string>
-    <string name="scanner_error_crop_failed">Không thể cắt ảnh. Vui lòng thử lại.</string>
-    <string name="scanner_recent_metadata_failed">Đã lưu PDF nhưng không thể cập nhật danh sách gần đây.</string>
-    <string name="scanner_camera_permission_required">Cần quyền Camera để tiếp tục.</string>
-    <string name="scanner_capture_again">Chụp lại</string>
-    <string name="scanner_capture_detecting">Đang nhận diện tài liệu…</string>
-    <string name="scanner_capture_flattening">Đang làm phẳng trang…</string>
-    <string name="scanner_capture_saving_page">Đang thêm vào bộ sưu tập…</string>
-    <string name="scanner_save_pdf">Lưu PDF</string>
+    <string name="scanner_processing">Processing document…</string>
+    <string name="scanner_processing_page_background">Adding page…</string>
+    <string name="scanner_saved_file_label">Saved to:</string>
+    <string name="scanner_save_success_title">PDF saved</string>
+    <string name="scanner_save_success_subtitle">%1$s · %2$s</string>
+    <string name="scanner_save_success_hint">Share via email or other apps, or save to your Downloads folder.</string>
+    <string name="scanner_action_share">Share</string>
+    <string name="scanner_action_email">Email</string>
+    <string name="scanner_action_save_downloads">Save to device</string>
+    <string name="scanner_share_chooser_title">Share PDF via</string>
+    <string name="scanner_email_chooser_title">Send PDF via email</string>
+    <string name="scanner_saved_to_downloads">Saved to Downloads folder</string>
+    <string name="scanner_share_failed">Could not share PDF. Please try again.</string>
+    <string name="scanner_save_downloads_failed">Could not save to Downloads. Please try again.</string>
+    <string name="scanner_continue_scan">Continue scanning</string>
+    <string name="scanner_back_home">Back to home</string>
+    <string name="scanner_error_prefix">Error: %1$s</string>
+    <string name="scanner_error_oops_title">Oops!</string>
+    <string name="scanner_error_empty_pages">No pages to save.</string>
+    <string name="scanner_error_save_failed">Could not save PDF. Please try again.</string>
+    <string name="scanner_error_decode_failed">Could not read captured image.</string>
+    <string name="scanner_error_unknown">An unknown error occurred.</string>
+    <string name="scanner_error_crop_failed">Could not crop image. Please try again.</string>
+    <string name="scanner_recent_metadata_failed">PDF saved but recent scans could not be updated.</string>
+    <string name="scanner_camera_permission_required">Camera permission is required to continue.</string>
+    <string name="scanner_capture_again">Retake</string>
+    <string name="scanner_capture_detecting">Detecting document…</string>
+    <string name="scanner_capture_flattening">Flattening page…</string>
+    <string name="scanner_capture_saving_page">Adding to collection…</string>
+    <string name="scanner_save_pdf">Save PDF</string>
+    <string name="scanner_flash">Flash</string>
+    <string name="scanner_mode_label">Scanner mode</string>
+    <string name="scanner_page_mode_label">Page mode</string>
 
     <!-- Scanner Mode -->
-    <string name="scanner_mode_auto">Tự động</string>
-    <string name="scanner_mode_manual">Thủ công</string>
-    <string name="scanner_mode_single">Một trang</string>
-    <string name="scanner_mode_multi">Nhiều trang</string>
-    <string name="scanner_frame_auto_hint">Đang tự động nhận diện viền tài liệu</string>
-    <string name="scanner_frame_manual_hint">Hướng camera vào tài liệu và chạm để chụp</string>
-    <string name="scanner_page_count">%1$d trang đã quét</string>
+    <string name="scanner_mode_auto">Auto</string>
+    <string name="scanner_mode_manual">Manual</string>
+    <string name="scanner_mode_single">Single page</string>
+    <string name="scanner_mode_multi">Multi page</string>
+    <string name="scanner_frame_auto_hint">Automatically detecting document edges</string>
+    <string name="scanner_frame_manual_hint">Point the camera at a document and tap to capture</string>
+    <string name="scanner_page_count">%1$d pages scanned</string>
 
     <!-- Crop Editor -->
-    <string name="scanner_crop_title">Chỉnh sửa viền</string>
-    <string name="scanner_crop_hint">Kéo các góc để chỉnh vùng tài liệu</string>
-    <string name="scanner_crop_auto_detect">Tự động phát hiện</string>
-    <string name="scanner_crop_confirm">Tiếp tục</string>
-    <string name="scanner_crop_retake">Chụp lại</string>
+    <string name="scanner_crop_title">Adjust borders</string>
+    <string name="scanner_crop_hint">Drag the corners to adjust the document area</string>
+    <string name="scanner_crop_auto_detect">Auto detect</string>
+    <string name="scanner_crop_confirm">Continue</string>
+    <string name="scanner_crop_retake">Retake</string>
 
     <!-- Filter Editor -->
-    <string name="scanner_filter_title">Chọn bộ lọc</string>
-    <string name="scanner_filter_original">Gốc</string>
-    <string name="scanner_filter_bw">Đen trắng</string>
-    <string name="scanner_filter_grayscale">Xám</string>
-    <string name="scanner_filter_magic">Màu sắc</string>
-    <string name="scanner_filter_sharpen">Nét</string>
-    <string name="scanner_filter_confirm">Xong</string>
+    <string name="scanner_filter_title">Choose filter</string>
+    <string name="scanner_filter_original">Original</string>
+    <string name="scanner_filter_bw">Black &amp; white</string>
+    <string name="scanner_filter_grayscale">Grayscale</string>
+    <string name="scanner_filter_magic">Color</string>
+    <string name="scanner_filter_sharpen">Sharpen</string>
+    <string name="scanner_filter_confirm">Done</string>
+    <string name="scanner_filter_preview">Preview</string>
 
     <!-- Rotation -->
-    <string name="scanner_rotate_left">Xoay trái</string>
-    <string name="scanner_rotate_right">Xoay phải</string>
+    <string name="scanner_rotate_left">Rotate left</string>
+    <string name="scanner_rotate_right">Rotate right</string>
 
     <!-- Page Review -->
-    <string name="scanner_review_title">Xem lại</string>
-    <string name="scanner_review_add_more">Thêm trang</string>
-    <string name="scanner_review_edit">Chỉnh sửa</string>
-    <string name="scanner_review_delete">Xóa</string>
-    <string name="scanner_review_page_label">Trang %1$d / %2$d</string>
+    <string name="scanner_review_title">Review</string>
+    <string name="scanner_review_add_more">Add page</string>
+    <string name="scanner_review_edit">Edit</string>
+    <string name="scanner_review_delete">Delete</string>
+    <string name="scanner_review_delete_confirm">Are you sure you want to delete page %1$d?</string>
+    <string name="scanner_review_page_label">Page %1$d / %2$d</string>
+    <string name="scanner_review_page_content_desc">Page %1$d</string>
 
     <!-- Close / Back -->
-    <string name="scanner_close">Đóng</string>
+    <string name="scanner_close">Close</string>
+    <string name="scanner_document">Document</string>
+
+    <!-- PDF Viewer -->
+    <string name="viewer_error_prefix">Error: %1$s</string>
+    <string name="viewer_file_not_found">File does not exist</string>
+    <string name="viewer_page_content_desc">Page %1$d</string>
 
     <!-- Main Screen -->
     <string name="main_tab_home">Home</string>
@@ -134,12 +158,39 @@
     <string name="main_recent_scans_title">Recent Scans</string>
     <string name="main_recent_scans_empty">No recent scans yet</string>
     <string name="main_recent_open">Open</string>
+    <string name="main_recent_share">Share</string>
     <string name="main_recent_delete">Delete</string>
+    <string name="main_recent_more_actions">More actions</string>
+    <string name="main_recent_delete_title">Delete document?</string>
+    <string name="main_recent_delete_message">%1$s will be permanently removed from this device. This action cannot be undone.</string>
     <string name="main_recent_scan_meta">%1$s • %2$d pages • %3$s</string>
     <string name="main_recent_size_zero">0 B</string>
     <string name="main_recent_action_failed">Action failed. Please try again.</string>
     <string name="main_recent_delete_not_found">Document not found.</string>
     <string name="main_recent_delete_partial">Removed from list, but the file could not be deleted.</string>
+
+    <!-- Home documents & selection -->
+    <string name="main_documents_title">My Documents</string>
+    <string name="main_search_hint">Search documents</string>
+    <string name="main_empty_docs_title">No documents yet</string>
+    <string name="main_empty_docs_message">You have no documents here. Tap the scan button below to capture your first document.</string>
+    <string name="main_selection_select">Select</string>
+    <string name="main_selection_cancel">Cancel</string>
+    <string name="main_selection_count">%1$d selected</string>
+    <string name="main_selection_banner">Selection mode · %1$d selected</string>
+    <string name="main_selection_select_all">Select all</string>
+    <string name="main_selection_deselect_all">Deselect all</string>
+    <string name="main_selection_share">Share</string>
+    <string name="main_selection_delete">Delete</string>
+    <string name="main_selection_open">Open</string>
+    <string name="main_selection_delete_title">Delete selected documents?</string>
+    <string name="main_selection_delete_message">%1$d document(s) will be permanently removed from this device. This action cannot be undone.</string>
+    <string name="main_selection_delete_confirm">Delete</string>
+    <string name="main_selection_deleted">%1$d document(s) deleted</string>
+    <string name="main_selection_delete_partial">Some documents could not be fully removed from storage.</string>
+    <string name="main_selection_share_failed">Could not share selected documents. Please try again.</string>
+    <string name="main_selection_share_chooser">Share documents via</string>
+    <string name="main_selection_item_cd">Select %1$s</string>
     <string name="main_settings_title">Settings</string>
     <string name="main_settings_subtitle">Configure your scanning experience.</string>
     <string name="main_default_quality_title">Default Output</string>

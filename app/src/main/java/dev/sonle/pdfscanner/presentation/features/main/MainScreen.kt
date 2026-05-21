@@ -33,6 +33,7 @@ import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -53,20 +54,24 @@ fun MainScreen(
     modifier: Modifier = Modifier
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
+    var isHomeSelectionMode by remember { mutableStateOf(false) }
     val tabs = listOf(
         stringResource(R.string.main_tab_home) to Iconsax.Linear.Home,
         stringResource(R.string.main_tab_settings) to Iconsax.Linear.Setting
     )
+    val showBottomBar = selectedTab != 0 || !isHomeSelectionMode
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
         bottomBar = {
-            CustomBottomNavigationBar(
-                selectedTab = selectedTab,
-                onTabSelected = { selectedTab = it },
-                onOpenScanner = onOpenScanner,
-                tabs = tabs
-            )
+            if (showBottomBar) {
+                CustomBottomNavigationBar(
+                    selectedTab = selectedTab,
+                    onTabSelected = { selectedTab = it },
+                    onOpenScanner = onOpenScanner,
+                    tabs = tabs
+                )
+            }
         }
     ) { innerPadding ->
         AnimatedContent(
@@ -82,7 +87,11 @@ fun MainScreen(
             label = "tab_animation"
         ) { targetTab ->
             when (targetTab) {
-                0 -> HomeScreen(onOpenScanner = onOpenScanner)
+                0 -> HomeScreen(
+                    onOpenScanner = onOpenScanner,
+                    onSelectionModeChanged = { isHomeSelectionMode = it },
+                    modifier = Modifier.fillMaxSize()
+                )
                 else -> SettingsScreen()
             }
         }

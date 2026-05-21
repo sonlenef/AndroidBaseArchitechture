@@ -7,10 +7,13 @@ import dev.sonle.pdfscanner.R
 import dev.sonle.pdfscanner.domain.model.RecentScan
 import dev.sonle.pdfscanner.domain.repository.RecentScanDeleteResult
 import dev.sonle.pdfscanner.domain.usecase.DeleteRecentScanUseCase
+import dev.sonle.pdfscanner.domain.usecase.DeleteRecentScansUseCase
 import dev.sonle.pdfscanner.domain.usecase.ObserveRecentScansUseCase
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -18,16 +21,29 @@ import timber.log.Timber
 data class HomeUiState(
     val isLoading: Boolean = true,
     val recentScans: List<RecentScan> = emptyList(),
+    val isSelectionMode: Boolean = false,
+    val selectedScanIds: Set<Long> = emptySet(),
+    val isBulkActionInProgress: Boolean = false,
     @StringRes val errorMessageRes: Int? = null
-)
+) {
+    val selectedCount: Int get() = selectedScanIds.size
+    val canSelectAll: Boolean get() = recentScans.isNotEmpty()
+    val isAllSelected: Boolean get() =
+        canSelectAll && selectedScanIds.size == recentScans.size
+    val hasSelection: Boolean get() = selectedScanIds.isNotEmpty()
+}
 
 class HomeViewModel(
     private val observeRecentScansUseCase: ObserveRecentScansUseCase,
-    private val deleteRecentScanUseCase: DeleteRecentScanUseCase
+    private val deleteRecentScanUseCase: DeleteRecentScanUseCase,
+    private val deleteRecentScansUseCase: DeleteRecentScansUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+
+    private val _uiEffects = Channel<HomeUiEffect>(Channel.BUFFERED)
+    val uiEffects = _uiEffects.receiveAsFlow()
 
     init {
         observeRecentScans()
@@ -37,12 +53,68 @@ class HomeViewModel(
         viewModelScope.launch {
             observeRecentScansUseCase()
                 .collect { items ->
-                    _uiState.value = HomeUiState(
-                        isLoading = false,
-                        recentScans = items,
-                        errorMessageRes = null
-                    )
+                    _uiState.update { state ->
+                        val validIds = state.selectedScanIds.intersect(items.map { it.id }.toSet())
+                        val shouldExitSelection =
+                            state.isSelectionMode && items.isEmpty()
+                        state.copy(
+                            isLoading = false,
+                            recentScans = items,
+                            errorMessageRes = null,
+                            selectedScanIds = validIds,
+                            isSelectionMode = if (shouldExitSelection) false else state.isSelectionMode
+                        )
+                    }
                 }
+        }
+    }
+
+    fun toggleSelectionMode() {
+        _uiState.update { state ->
+            if (state.isSelectionMode) {
+                state.copy(isSelectionMode = false, selectedScanIds = emptySet())
+            } else {
+                state.copy(isSelectionMode = true, selectedScanIds = emptySet())
+            }
+        }
+    }
+
+    fun exitSelectionMode() {
+        _uiState.update {
+            it.copy(isSelectionMode = false, selectedScanIds = emptySet())
+        }
+    }
+
+    fun toggleScanSelection(scanId: Long) {
+        _uiState.update { state ->
+            if (!state.isSelectionMode) return@update state
+            val updated = state.selectedScanIds.toMutableSet()
+            if (!updated.add(scanId)) {
+                updated.remove(scanId)
+            }
+            state.copy(selectedScanIds = updated)
+        }
+    }
+
+    fun enterSelectionWithScan(scanId: Long) {
+        _uiState.update { state ->
+            state.copy(
+                isSelectionMode = true,
+                selectedScanIds = state.selectedScanIds + scanId
+            )
+        }
+    }
+
+    fun toggleSelectAll() {
+        _uiState.update { state ->
+            if (!state.isSelectionMode || state.recentScans.isEmpty()) return@update state
+            val allIds = state.recentScans.map { it.id }.toSet()
+            val updatedSelection = if (state.isAllSelected) {
+                emptySet()
+            } else {
+                allIds
+            }
+            state.copy(selectedScanIds = updatedSelection)
         }
     }
 
@@ -67,6 +139,43 @@ class HomeViewModel(
                 }
             }
         }
+    }
+
+    fun deleteSelectedScans() {
+        val selectedIds = _uiState.value.selectedScanIds
+        if (selectedIds.isEmpty()) return
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isBulkActionInProgress = true) }
+            val result = deleteRecentScansUseCase(selectedIds)
+            _uiState.update {
+                it.copy(
+                    isBulkActionInProgress = false,
+                    isSelectionMode = false,
+                    selectedScanIds = emptySet()
+                )
+            }
+            when {
+                result.deletedCount > 0 && !result.hasAnyFailure -> {
+                    _uiEffects.send(HomeUiEffect.DocumentsDeleted(result.deletedCount))
+                }
+                result.deletedCount > 0 && result.hasAnyFailure -> {
+                    _uiEffects.send(HomeUiEffect.DocumentsDeleted(result.deletedCount))
+                    _uiEffects.send(HomeUiEffect.ShowMessage(R.string.main_selection_delete_partial))
+                }
+                result.deletedCount == 0 && result.notFoundCount > 0 -> {
+                    _uiEffects.send(HomeUiEffect.ShowMessage(R.string.main_recent_delete_not_found))
+                }
+                else -> {
+                    _uiEffects.send(HomeUiEffect.ShowMessage(R.string.main_recent_action_failed))
+                }
+            }
+        }
+    }
+
+    fun selectedScans(): List<RecentScan> {
+        val state = _uiState.value
+        return state.recentScans.filter { it.id in state.selectedScanIds }
     }
 
     fun clearError() {

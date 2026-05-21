@@ -103,7 +103,7 @@ fun CropEditorView(
         ) {
             Image(
                 bitmap = imageBitmap,
-                contentDescription = "Document",
+                contentDescription = stringResource(R.string.scanner_document),
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.fillMaxSize()
             )

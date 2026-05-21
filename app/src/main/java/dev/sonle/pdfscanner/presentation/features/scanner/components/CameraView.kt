@@ -324,7 +324,7 @@ fun CameraView(
             // Flash toggle
             GlassIconButton(
                 icon = if (isFlashOn) Iconsax.Bold.Flash else Iconsax.Linear.Flash,
-                contentDescription = "Flash",
+                contentDescription = stringResource(R.string.scanner_flash),
                 tint = if (isFlashOn) Color(0xFFFFD700) else Color.White,
                 enabled = !isCapturePipelineRunning,
                 onClick = { isFlashOn = !isFlashOn }
@@ -422,7 +422,7 @@ fun CameraView(
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     GlassIconButton(
                         icon = Iconsax.Bold.DocumentCopy,
-                        contentDescription = "Page Mode",
+                        contentDescription = stringResource(R.string.scanner_page_mode_label),
                         isActive = pageMode == PageMode.MULTI,
                         enabled = !isCapturePipelineRunning,
                         onClick = onTogglePageMode

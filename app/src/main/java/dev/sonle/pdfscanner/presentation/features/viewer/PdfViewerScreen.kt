@@ -13,10 +13,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import dev.sonle.pdfscanner.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -31,6 +34,7 @@ fun PdfViewerScreen(
     var fileDescriptor by remember { mutableStateOf<ParcelFileDescriptor?>(null) }
     var pageCount by remember { mutableIntStateOf(0) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
 
     LaunchedEffect(filePath) {
         withContext(Dispatchers.IO) {
@@ -41,7 +45,7 @@ fun PdfViewerScreen(
                     pdfRenderer = PdfRenderer(fileDescriptor!!)
                     pageCount = pdfRenderer?.pageCount ?: 0
                 } else {
-                    errorMessage = "File does not exist"
+                    errorMessage = context.getString(R.string.viewer_file_not_found)
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -68,7 +72,10 @@ fun PdfViewerScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            Icons.AutoMirrored.Rounded.ArrowBack,
+                            contentDescription = stringResource(R.string.back)
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -80,7 +87,10 @@ fun PdfViewerScreen(
     ) { paddingValues ->
         if (errorMessage != null) {
             Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
-                Text(text = "Error: $errorMessage", color = MaterialTheme.colorScheme.error)
+                Text(
+                    text = stringResource(R.string.viewer_error_prefix, errorMessage.orEmpty()),
+                    color = MaterialTheme.colorScheme.error
+                )
             }
         } else if (pageCount == 0) {
             Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
@@ -136,7 +146,10 @@ fun PdfPageItem(pdfRenderer: PdfRenderer?, pageIndex: Int) {
         if (bitmap != null) {
             Image(
                 bitmap = bitmap!!.asImageBitmap(),
-                contentDescription = "Page ${pageIndex + 1}",
+                contentDescription = stringResource(
+                    R.string.viewer_page_content_desc,
+                    pageIndex + 1
+                ),
                 modifier = Modifier.fillMaxWidth(),
                 contentScale = ContentScale.FillWidth
             )

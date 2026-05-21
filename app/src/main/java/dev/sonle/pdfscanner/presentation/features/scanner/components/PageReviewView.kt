@@ -147,7 +147,10 @@ fun PageReviewView(
                 ) {
                     Image(
                         bitmap = pages[pageIndex].processedBitmap.asImageBitmap(),
-                        contentDescription = "Page ${pageIndex + 1}",
+                        contentDescription = stringResource(
+                            R.string.scanner_review_page_content_desc,
+                            pageIndex + 1
+                        ),
                         contentScale = ContentScale.Fit,
                         modifier = Modifier
                             .fillMaxSize()
@@ -280,7 +283,14 @@ fun PageReviewView(
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             title = { Text(stringResource(R.string.scanner_review_delete)) },
-            text = { Text("Bạn có chắc muốn xóa trang ${pageToDelete + 1}?") },
+            text = {
+                Text(
+                    stringResource(
+                        R.string.scanner_review_delete_confirm,
+                        pageToDelete + 1
+                    )
+                )
+            },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -361,7 +371,10 @@ private fun PageThumbnail(
     ) {
         Image(
             bitmap = bitmap.asImageBitmap(),
-            contentDescription = "Page $pageNumber",
+            contentDescription = stringResource(
+                R.string.scanner_review_page_content_desc,
+                pageNumber
+            ),
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
         )

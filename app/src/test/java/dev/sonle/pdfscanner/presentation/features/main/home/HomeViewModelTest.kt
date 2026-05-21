@@ -1,9 +1,11 @@
 package dev.sonle.pdfscanner.presentation.features.main.home
 
 import app.cash.turbine.test
+import dev.sonle.pdfscanner.domain.model.BatchDeleteRecentScansResult
 import dev.sonle.pdfscanner.domain.model.RecentScan
 import dev.sonle.pdfscanner.domain.repository.RecentScanDeleteResult
 import dev.sonle.pdfscanner.domain.usecase.DeleteRecentScanUseCase
+import dev.sonle.pdfscanner.domain.usecase.DeleteRecentScansUseCase
 import dev.sonle.pdfscanner.domain.usecase.ObserveRecentScansUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -18,6 +20,8 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -27,13 +31,22 @@ class HomeViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private lateinit var observeRecentScansUseCase: ObserveRecentScansUseCase
     private lateinit var deleteRecentScanUseCase: DeleteRecentScanUseCase
+    private lateinit var deleteRecentScansUseCase: DeleteRecentScansUseCase
+
+    private val sampleScans = listOf(
+        RecentScan(1, "A.pdf", "/a.pdf", 1, 100, 1),
+        RecentScan(2, "B.pdf", "/b.pdf", 2, 200, 2)
+    )
 
     @Before
     fun setup() {
         Dispatchers.setMain(dispatcher)
         observeRecentScansUseCase = mockk()
         deleteRecentScanUseCase = mockk()
+        deleteRecentScansUseCase = mockk()
+        every { observeRecentScansUseCase() } returns MutableStateFlow(sampleScans)
         coEvery { deleteRecentScanUseCase(any()) } returns RecentScanDeleteResult.Success
+        coEvery { deleteRecentScansUseCase(any()) } returns BatchDeleteRecentScansResult(deletedCount = 2)
     }
 
     @After
@@ -41,35 +54,81 @@ class HomeViewModelTest {
         Dispatchers.resetMain()
     }
 
-    @Test
-    fun `uiState should emit recent scans when repository emits data`() = runTest {
-        val recentScans = listOf(
-            RecentScan(
-                id = 1,
-                fileName = "Scan_1.pdf",
-                filePath = "/tmp/Scan_1.pdf",
-                pageCount = 2,
-                fileSizeBytes = 1200,
-                savedAt = 1000
-            )
-        )
-        val source = MutableStateFlow(recentScans)
-        every { observeRecentScansUseCase() } returns source
+    private fun createViewModel(): HomeViewModel =
+        HomeViewModel(observeRecentScansUseCase, deleteRecentScanUseCase, deleteRecentScansUseCase)
 
-        val viewModel = HomeViewModel(observeRecentScansUseCase, deleteRecentScanUseCase)
+    @Test
+    fun `toggleSelectionMode should enable and clear selection`() = runTest {
+        val viewModel = createViewModel()
         dispatcher.scheduler.advanceUntilIdle()
 
-        viewModel.uiState.test {
-            val state = awaitItem()
-            assertEquals(false, state.isLoading)
-            assertEquals(recentScans, state.recentScans)
+        viewModel.toggleSelectionMode()
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isSelectionMode)
+        assertEquals(0, viewModel.uiState.value.selectedCount)
+
+        viewModel.toggleScanSelection(1)
+        viewModel.toggleSelectionMode()
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isSelectionMode)
+        assertEquals(0, viewModel.uiState.value.selectedCount)
+    }
+
+    @Test
+    fun `toggleSelectAll should select and deselect every scan`() = runTest {
+        val viewModel = createViewModel()
+        dispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.toggleSelectionMode()
+        viewModel.toggleSelectAll()
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isAllSelected)
+        assertEquals(2, viewModel.uiState.value.selectedCount)
+
+        viewModel.toggleSelectAll()
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(0, viewModel.uiState.value.selectedCount)
+    }
+
+    @Test
+    fun `enterSelectionWithScan should enable selection mode with one item`() = runTest {
+        val viewModel = createViewModel()
+        dispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.enterSelectionWithScan(2)
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isSelectionMode)
+        assertEquals(setOf(2L), viewModel.uiState.value.selectedScanIds)
+    }
+
+    @Test
+    fun `deleteSelectedScans should call batch delete and emit effect`() = runTest {
+        val viewModel = createViewModel()
+        dispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.toggleSelectionMode()
+        viewModel.toggleScanSelection(1)
+        viewModel.toggleScanSelection(2)
+
+        viewModel.uiEffects.test {
+            viewModel.deleteSelectedScans()
+            dispatcher.scheduler.advanceUntilIdle()
+
+            val effect = awaitItem()
+            assertTrue(effect is HomeUiEffect.DocumentsDeleted)
+            assertEquals(2, (effect as HomeUiEffect.DocumentsDeleted).count)
+            coVerify(exactly = 1) { deleteRecentScansUseCase(setOf(1L, 2L)) }
         }
     }
 
     @Test
-    fun `deleteRecentScan should call delete use case`() = runTest {
-        every { observeRecentScansUseCase() } returns MutableStateFlow(emptyList())
-        val viewModel = HomeViewModel(observeRecentScansUseCase, deleteRecentScanUseCase)
+    fun `deleteRecentScan should call single delete use case`() = runTest {
+        val viewModel = createViewModel()
         dispatcher.scheduler.advanceUntilIdle()
 
         viewModel.deleteRecentScan(42)

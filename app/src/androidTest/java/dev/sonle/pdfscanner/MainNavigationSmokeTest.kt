@@ -19,7 +19,7 @@ class MainNavigationSmokeTest {
             onNodeWithText("My Documents").assertIsDisplayed()
             onNodeWithContentDescription("Scan").performClick()
             waitForIdle()
-            onNodeWithContentDescription("Đóng").performClick()
+            onNodeWithContentDescription("Close").performClick()
             waitForIdle()
             onNodeWithText("My Documents").assertIsDisplayed()
         }

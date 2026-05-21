@@ -19,19 +19,23 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -44,9 +48,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import dev.sonle.pdfscanner.R
+import dev.sonle.pdfscanner.core.util.PdfExportActions
 import dev.sonle.pdfscanner.presentation.features.scanner.components.CameraView
 import dev.sonle.pdfscanner.presentation.features.scanner.components.CropEditorView
 import dev.sonle.pdfscanner.presentation.features.scanner.components.FilterEditorView
+import dev.sonle.pdfscanner.presentation.features.scanner.components.SaveSuccessView
 import dev.sonle.pdfscanner.presentation.features.scanner.model.PageMode
 import org.koin.androidx.compose.koinViewModel
 
@@ -59,6 +65,19 @@ fun ScannerScreen(
     val uiState by viewModel.uiState.collectAsState()
     val detectionState by viewModel.detection.collectAsState()
     val captureOverlay by viewModel.captureOverlay.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(viewModel) {
+        viewModel.uiEffects.collect { effect ->
+            when (effect) {
+                is ScannerUiEffect.ShowMessage -> {
+                    snackbarHostState.showSnackbar(context.getString(effect.messageResId))
+                }
+                is ScannerUiEffect.SaveCompleted -> Unit
+            }
+        }
+    }
 
     var hasCameraPermission by remember {
         mutableStateOf(
@@ -90,10 +109,17 @@ fun ScannerScreen(
     }
 
     if (!hasCameraPermission) {
-        PermissionRequiredView()
+        Box(modifier = Modifier.fillMaxSize()) {
+            PermissionRequiredView()
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
+        }
         return
     }
 
+    Box(modifier = Modifier.fillMaxSize()) {
     when (val state = uiState) {
         is ScannerUiState.Camera -> {
             CameraView(
@@ -164,7 +190,50 @@ fun ScannerScreen(
 
         is ScannerUiState.SaveSuccess -> {
             SaveSuccessView(
-                filePath = state.exported.absolutePath,
+                exported = state.exported,
+                onShare = {
+                    PdfExportActions.sharePdf(
+                        context,
+                        state.exported,
+                        context.getString(R.string.scanner_share_chooser_title)
+                    ).onFailure {
+                        scope.launch {
+                            snackbarHostState.showSnackbar(
+                                context.getString(R.string.scanner_share_failed)
+                            )
+                        }
+                    }
+                },
+                onShareEmail = {
+                    PdfExportActions.sharePdfViaEmail(
+                        context,
+                        state.exported,
+                        context.getString(R.string.scanner_email_chooser_title)
+                    ).onFailure {
+                        scope.launch {
+                            snackbarHostState.showSnackbar(
+                                context.getString(R.string.scanner_share_failed)
+                            )
+                        }
+                    }
+                },
+                onSaveToDownloads = {
+                    PdfExportActions.saveToDownloads(context, state.exported)
+                        .onSuccess {
+                            scope.launch {
+                                snackbarHostState.showSnackbar(
+                                    context.getString(R.string.scanner_saved_to_downloads)
+                                )
+                            }
+                        }
+                        .onFailure {
+                            scope.launch {
+                                snackbarHostState.showSnackbar(
+                                    context.getString(R.string.scanner_save_downloads_failed)
+                                )
+                            }
+                        }
+                },
                 onContinue = viewModel::reset,
                 onBackHome = {
                     viewModel.reset()
@@ -179,6 +248,12 @@ fun ScannerScreen(
                 onRetry = viewModel::reset
             )
         }
+    }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
     }
 }
 
@@ -250,106 +325,6 @@ private fun ProcessingView() {
 }
 
 @Composable
-private fun SaveSuccessView(
-    filePath: String,
-    onContinue: () -> Unit,
-    onBackHome: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .padding(32.dp)
-                .background(Color.DarkGray.copy(alpha = 0.4f), RoundedCornerShape(32.dp))
-                .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(32.dp))
-                .padding(32.dp)
-        ) {
-            // Success icon with glow
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .background(Color(0xFF00E676).copy(alpha = 0.2f), CircleShape)
-                    .padding(12.dp)
-                    .background(Color(0xFF00E676), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    Icons.Rounded.Check,
-                    contentDescription = null,
-                    tint = Color.Black,
-                    modifier = Modifier.size(40.dp)
-                )
-            }
-
-            Spacer(Modifier.height(24.dp))
-
-            Text(
-                text = stringResource(R.string.scanner_saved_file_label),
-                style = MaterialTheme.typography.headlineSmall,
-                color = Color.White,
-                fontWeight = FontWeight.Bold
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            Text(
-                text = filePath,
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.White.copy(alpha = 0.7f),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 8.dp)
-            )
-
-            Spacer(Modifier.height(40.dp))
-
-            Button(
-                onClick = onContinue,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF00E676),
-                    contentColor = Color.Black
-                ),
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-            ) {
-                Text(
-                    stringResource(R.string.scanner_continue_scan),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                )
-            }
-
-            Spacer(Modifier.height(12.dp))
-
-            Button(
-                onClick = onBackHome,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Transparent,
-                    contentColor = Color.White
-                ),
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-                    .border(1.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
-            ) {
-                Text(
-                    stringResource(R.string.scanner_back_home),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                )
-            }
-        }
-    }
-}
-
-@Composable
 private fun ErrorView(
     message: String,
     onRetry: () -> Unit
@@ -369,7 +344,7 @@ private fun ErrorView(
                 .padding(32.dp)
         ) {
             Text(
-                text = "Oops!",
+                text = stringResource(R.string.scanner_error_oops_title),
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.error,
                 fontWeight = FontWeight.Bold
