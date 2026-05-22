@@ -8,6 +8,7 @@ interface RecentScanRepository {
     suspend fun upsertRecentScan(recentScan: RecentScan)
     suspend fun findRecentScanById(id: Long): RecentScan?
     suspend fun deleteRecentScanById(id: Long): RecentScanDeleteResult
+    suspend fun renameRecentScanById(id: Long, newFileName: String): RecentScanRenameResult
 }
 
 sealed class RecentScanDeleteResult {

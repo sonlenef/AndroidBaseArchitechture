@@ -5,8 +5,10 @@ import dev.sonle.pdfscanner.domain.model.BatchDeleteRecentScansResult
 import dev.sonle.pdfscanner.domain.model.RecentScan
 import dev.sonle.pdfscanner.domain.repository.RecentScanDeleteResult
 import dev.sonle.pdfscanner.domain.usecase.DeleteRecentScanUseCase
+import dev.sonle.pdfscanner.domain.repository.RecentScanRenameResult
 import dev.sonle.pdfscanner.domain.usecase.DeleteRecentScansUseCase
 import dev.sonle.pdfscanner.domain.usecase.ObserveRecentScansUseCase
+import dev.sonle.pdfscanner.domain.usecase.RenameRecentScanUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -32,6 +34,7 @@ class HomeViewModelTest {
     private lateinit var observeRecentScansUseCase: ObserveRecentScansUseCase
     private lateinit var deleteRecentScanUseCase: DeleteRecentScanUseCase
     private lateinit var deleteRecentScansUseCase: DeleteRecentScansUseCase
+    private lateinit var renameRecentScanUseCase: RenameRecentScanUseCase
 
     private val sampleScans = listOf(
         RecentScan(1, "A.pdf", "/a.pdf", 1, 100, 1),
@@ -44,7 +47,9 @@ class HomeViewModelTest {
         observeRecentScansUseCase = mockk()
         deleteRecentScanUseCase = mockk()
         deleteRecentScansUseCase = mockk()
+        renameRecentScanUseCase = mockk()
         every { observeRecentScansUseCase() } returns MutableStateFlow(sampleScans)
+        coEvery { renameRecentScanUseCase(any(), any()) } returns RecentScanRenameResult.Success(sampleScans[0])
         coEvery { deleteRecentScanUseCase(any()) } returns RecentScanDeleteResult.Success
         coEvery { deleteRecentScansUseCase(any()) } returns BatchDeleteRecentScansResult(deletedCount = 2)
     }
@@ -55,7 +60,12 @@ class HomeViewModelTest {
     }
 
     private fun createViewModel(): HomeViewModel =
-        HomeViewModel(observeRecentScansUseCase, deleteRecentScanUseCase, deleteRecentScansUseCase)
+        HomeViewModel(
+            observeRecentScansUseCase,
+            deleteRecentScanUseCase,
+            deleteRecentScansUseCase,
+            renameRecentScanUseCase
+        )
 
     @Test
     fun `toggleSelectionMode should enable and clear selection`() = runTest {
@@ -135,5 +145,61 @@ class HomeViewModelTest {
         dispatcher.scheduler.advanceUntilIdle()
 
         coVerify(exactly = 1) { deleteRecentScanUseCase(42) }
+    }
+
+    @Test
+    fun `updateSearchQuery should filter displayed scans`() = runTest {
+        val viewModel = createViewModel()
+        dispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.updateSearchQuery("A")
+        dispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(state.isSearching)
+        assertEquals(1, state.displayedScans.size)
+        assertEquals("A.pdf", state.displayedScans.first().fileName)
+    }
+
+    @Test
+    fun `clearSearch should restore full list`() = runTest {
+        val viewModel = createViewModel()
+        dispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.updateSearchQuery("A")
+        viewModel.clearSearch()
+        dispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isSearching)
+        assertEquals(2, state.displayedScans.size)
+    }
+
+    @Test
+    fun `renameRecentScan should emit success message when rename succeeds`() = runTest {
+        val viewModel = createViewModel()
+        dispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.uiEffects.test {
+            viewModel.renameRecentScan(1, "Renamed")
+            dispatcher.scheduler.advanceUntilIdle()
+
+            assertTrue(awaitItem() is HomeUiEffect.ShowMessage)
+            coVerify(exactly = 1) { renameRecentScanUseCase(1, "Renamed") }
+        }
+    }
+
+    @Test
+    fun `toggleSelectAll should only affect visible scans when searching`() = runTest {
+        val viewModel = createViewModel()
+        dispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.updateSearchQuery("A")
+        viewModel.toggleSelectionMode()
+        viewModel.toggleSelectAll()
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(setOf(1L), viewModel.uiState.value.selectedScanIds)
+        assertTrue(viewModel.uiState.value.isAllSelected)
     }
 }

@@ -3,16 +3,17 @@ package dev.sonle.pdfscanner.presentation.features.main.home
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -26,16 +27,20 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -46,6 +51,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -62,17 +68,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -82,6 +93,7 @@ import com.github.yohannestz.iconsax_compose.iconsax.Iconsax
 import dev.sonle.pdfscanner.R
 import dev.sonle.pdfscanner.core.util.PdfExportActions
 import dev.sonle.pdfscanner.domain.model.RecentScan
+import dev.sonle.pdfscanner.domain.util.DocumentFileNameNormalizer
 import dev.sonle.pdfscanner.domain.navigation.PdfViewerScreenRoute
 import dev.sonle.pdfscanner.presentation.navigation.LocalNavigator
 import dev.sonle.pdfscanner.presentation.util.FormatUtils
@@ -110,6 +122,13 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val dismissKeyboard: () -> Unit = {
+        focusManager.clearFocus(force = true)
+        keyboardController?.hide()
+        Unit
+    }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(viewModel) {
@@ -118,6 +137,7 @@ fun HomeScreen(
                 is HomeUiEffect.ShowMessage -> {
                     snackbarHostState.showSnackbar(context.getString(effect.messageResId))
                 }
+
                 is HomeUiEffect.DocumentsDeleted -> {
                     snackbarHostState.showSnackbar(
                         context.getString(R.string.main_selection_deleted, effect.count)
@@ -133,6 +153,11 @@ fun HomeScreen(
 
     if (uiState.isSelectionMode) {
         BackHandler { viewModel.exitSelectionMode() }
+    } else if (uiState.isSearching) {
+        BackHandler {
+            dismissKeyboard()
+            viewModel.clearSearch()
+        }
     }
 
     val listBottomPadding = if (uiState.isSelectionMode) {
@@ -145,16 +170,16 @@ fun HomeScreen(
         modifier = modifier.fillMaxSize(),
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
-    ) { scaffoldPadding ->
+    ) { _ ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(scaffoldPadding)
+                .dismissKeyboardOnTap()
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 20.dp)
+                    .padding(horizontal = 20.dp, vertical = 16.dp)
             ) {
                 HomeTopBar(
                     isSelectionMode = uiState.isSelectionMode,
@@ -162,13 +187,35 @@ fun HomeScreen(
                     isAllSelected = uiState.isAllSelected,
                     canSelectAll = uiState.canSelectAll,
                     isBulkActionInProgress = uiState.isBulkActionInProgress,
+                    onDismissKeyboard = dismissKeyboard,
                     onToggleSelectionMode = viewModel::toggleSelectionMode,
                     onExitSelectionMode = viewModel::exitSelectionMode,
                     onToggleSelectAll = viewModel::toggleSelectAll
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
-                HomeSearchBar()
+                AnimatedVisibility(visible = !uiState.isSelectionMode) {
+                    Column {
+                        HomeSearchBar(
+                            query = uiState.searchQuery,
+                            onQueryChange = viewModel::updateSearchQuery,
+                            onClear = viewModel::clearSearch,
+                            enabled = !uiState.isLoading
+                        )
+                        if (uiState.isSearching && uiState.displayedScans.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = pluralStringResource(
+                                    R.plurals.main_search_results_count,
+                                    uiState.displayedScans.size,
+                                    uiState.displayedScans.size
+                                ),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(start = 4.dp)
+                            )
+                        }
+                    }
+                }
                 Spacer(modifier = Modifier.height(20.dp))
 
                 uiState.errorMessageRes?.let { messageRes ->
@@ -197,7 +244,8 @@ fun HomeScreen(
                             }
                         }
                     }
-                    uiState.recentScans.isEmpty() -> {
+
+                    uiState.isEmptyLibrary -> {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -207,17 +255,37 @@ fun HomeScreen(
                             EmptyDocsState()
                         }
                     }
+
+                    uiState.isEmptySearchResults -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(bottom = listBottomPadding),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            SearchNoResultsState(onClearSearch = viewModel::clearSearch)
+                        }
+                    }
+
                     else -> {
+                        val listState = rememberLazyListState()
+                        LaunchedEffect(listState.isScrollInProgress) {
+                            if (listState.isScrollInProgress) {
+                                dismissKeyboard()
+                            }
+                        }
                         LazyColumn(
+                            state = listState,
                             modifier = Modifier.fillMaxSize(),
                             contentPadding = PaddingValues(bottom = listBottomPadding),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            items(uiState.recentScans, key = { it.id }) { recentScan ->
+                            items(uiState.displayedScans, key = { it.id }) { recentScan ->
                                 RecentScanItem(
                                     recentScan = recentScan,
                                     isSelectionMode = uiState.isSelectionMode,
                                     isSelected = recentScan.id in uiState.selectedScanIds,
+                                    onDismissKeyboard = dismissKeyboard,
                                     onOpen = {
                                         navigator.navigateTo(PdfViewerScreenRoute(recentScan.filePath))
                                     },
@@ -236,6 +304,9 @@ fun HomeScreen(
                                     },
                                     onToggleSelection = { viewModel.toggleScanSelection(recentScan.id) },
                                     onEnterSelection = { viewModel.enterSelectionWithScan(recentScan.id) },
+                                    onRename = { newName ->
+                                        viewModel.renameRecentScan(recentScan.id, newName)
+                                    },
                                     onDelete = { viewModel.deleteRecentScan(recentScan.id) }
                                 )
                             }
@@ -325,6 +396,7 @@ private fun HomeTopBar(
     isAllSelected: Boolean,
     canSelectAll: Boolean,
     isBulkActionInProgress: Boolean,
+    onDismissKeyboard: () -> Unit,
     onToggleSelectionMode: () -> Unit,
     onExitSelectionMode: () -> Unit,
     onToggleSelectAll: () -> Unit
@@ -336,7 +408,10 @@ private fun HomeTopBar(
                 .padding(top = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TextButton(onClick = onExitSelectionMode) {
+            TextButton(onClick = {
+                onDismissKeyboard()
+                onExitSelectionMode()
+            }) {
                 Text(
                     text = stringResource(R.string.main_selection_cancel),
                     style = MaterialTheme.typography.labelLarge,
@@ -360,7 +435,10 @@ private fun HomeTopBar(
                 )
             } else {
                 TextButton(
-                    onClick = onToggleSelectAll,
+                    onClick = {
+                        onDismissKeyboard()
+                        onToggleSelectAll()
+                    },
                     enabled = canSelectAll
                 ) {
                     Text(
@@ -392,7 +470,10 @@ private fun HomeTopBar(
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
-            TextButton(onClick = onToggleSelectionMode) {
+            TextButton(onClick = {
+                onDismissKeyboard()
+                onToggleSelectionMode()
+            }) {
                 Text(
                     text = stringResource(R.string.main_selection_select),
                     style = MaterialTheme.typography.labelLarge,
@@ -421,7 +502,7 @@ private fun HomeSelectionActionBar(
     val sheetBackground = Brush.verticalGradient(
         colors = listOf(
             MaterialTheme.colorScheme.surfaceContainerHigh,
-            Color.Transparent
+            MaterialTheme.colorScheme.surface
         )
     )
 
@@ -526,29 +607,136 @@ private fun SelectionBarAction(
 }
 
 @Composable
-private fun HomeSearchBar() {
+private fun Modifier.dismissKeyboardOnTap(): Modifier = composed {
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+    pointerInput(Unit) {
+        detectTapGestures(onTap = {
+            focusManager.clearFocus(force = true)
+            keyboardController?.hide()
+        })
+    }
+}
+
+@Composable
+private fun HomeSearchBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onClear: () -> Unit,
+    enabled: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val dismissKeyboard: () -> Unit = {
+        focusManager.clearFocus(force = true)
+        keyboardController?.hide()
+        Unit
+    }
+    val hintColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surface,
         shadowElevation = 4.dp,
-        tonalElevation = 1.dp
+        tonalElevation = 1.dp,
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+        )
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+            modifier = Modifier.padding(start = 16.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 imageVector = Icons.Rounded.Search,
-                contentDescription = stringResource(R.string.main_search_hint),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                contentDescription = null,
+                tint = hintColor,
+                modifier = Modifier.size(22.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = stringResource(R.string.main_search_hint),
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                style = MaterialTheme.typography.bodyLarge
+            BasicTextField(
+                value = query,
+                onValueChange = onQueryChange,
+                enabled = enabled,
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodyLarge.copy(
+                    color = MaterialTheme.colorScheme.onSurface
+                ),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(
+                    onSearch = { dismissKeyboard() }
+                ),
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(vertical = 10.dp),
+                decorationBox = { innerTextField ->
+                    Box(contentAlignment = Alignment.CenterStart) {
+                        if (query.isEmpty()) {
+                            Text(
+                                text = stringResource(R.string.main_search_hint),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = hintColor,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        innerTextField()
+                    }
+                }
             )
+            AnimatedVisibility(visible = query.isNotEmpty()) {
+                IconButton(
+                    onClick = {
+                        onClear()
+                        dismissKeyboard()
+                    },
+                    enabled = enabled,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = stringResource(R.string.main_search_clear),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SearchNoResultsState(onClearSearch: () -> Unit) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.padding(horizontal = 24.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.Search,
+            contentDescription = null,
+            modifier = Modifier.size(72.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = stringResource(R.string.main_search_no_results_title),
+            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.main_search_no_results_message),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+            textAlign = TextAlign.Center,
+            lineHeight = 22.sp
+        )
+        Spacer(modifier = Modifier.height(20.dp))
+        TextButton(onClick = onClearSearch) {
+            Text(stringResource(R.string.main_search_clear))
         }
     }
 }
@@ -606,13 +794,16 @@ private fun RecentScanItem(
     recentScan: RecentScan,
     isSelectionMode: Boolean,
     isSelected: Boolean,
+    onDismissKeyboard: () -> Unit,
     onOpen: () -> Unit,
     onShare: () -> Unit,
     onToggleSelection: () -> Unit,
     onEnterSelection: () -> Unit,
+    onRename: (String) -> Unit,
     onDelete: () -> Unit
 ) {
     var showActionMenu by remember { mutableStateOf(false) }
+    var showRenameDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     val cardShape = RoundedCornerShape(16.dp)
     val containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
@@ -634,9 +825,11 @@ private fun RecentScanItem(
             .then(selectionBorder)
             .combinedClickable(
                 onClick = {
+                    onDismissKeyboard()
                     if (isSelectionMode) onToggleSelection() else onOpen()
                 },
                 onLongClick = {
+                    onDismissKeyboard()
                     if (!isSelectionMode) onEnterSelection()
                 }
             )
@@ -719,7 +912,10 @@ private fun RecentScanItem(
                 } else {
                     Box {
                         IconButton(
-                            onClick = { showActionMenu = true },
+                            onClick = {
+                                onDismissKeyboard()
+                                showActionMenu = true
+                            },
                             modifier = Modifier.size(40.dp)
                         ) {
                             Icon(
@@ -733,17 +929,35 @@ private fun RecentScanItem(
                         }
                         DropdownMenu(
                             expanded = showActionMenu,
-                            onDismissRequest = { showActionMenu = false }
+                            onDismissRequest = {
+                                showActionMenu = false
+                                onDismissKeyboard()
+                            }
                         ) {
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.main_recent_share)) },
                                 onClick = {
                                     showActionMenu = false
+                                    onDismissKeyboard()
                                     onShare()
                                 },
                                 leadingIcon = {
                                     Icon(
                                         imageVector = Iconsax.Bold.Export,
+                                        contentDescription = null
+                                    )
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.main_recent_rename)) },
+                                onClick = {
+                                    showActionMenu = false
+                                    onDismissKeyboard()
+                                    showRenameDialog = true
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Iconsax.Linear.Edit,
                                         contentDescription = null
                                     )
                                 }
@@ -757,6 +971,7 @@ private fun RecentScanItem(
                                 },
                                 onClick = {
                                     showActionMenu = false
+                                    onDismissKeyboard()
                                     showDeleteDialog = true
                                 },
                                 leadingIcon = {
@@ -772,6 +987,17 @@ private fun RecentScanItem(
                 }
             }
         }
+    }
+
+    if (showRenameDialog) {
+        RenameDocumentDialog(
+            currentFileName = recentScan.fileName,
+            onDismiss = { showRenameDialog = false },
+            onConfirm = { newName ->
+                showRenameDialog = false
+                onRename(newName)
+            }
+        )
     }
 
     if (showDeleteDialog) {
@@ -806,6 +1032,45 @@ private fun RecentScanItem(
             }
         )
     }
+}
+
+@Composable
+private fun RenameDocumentDialog(
+    currentFileName: String,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit
+) {
+    var nameInput by remember(currentFileName) {
+        mutableStateOf(DocumentFileNameNormalizer.displayNameWithoutExtension(currentFileName))
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.main_recent_rename_title)) },
+        text = {
+            OutlinedTextField(
+                value = nameInput,
+                onValueChange = { nameInput = it },
+                label = { Text(stringResource(R.string.main_recent_rename_label)) },
+                singleLine = true,
+                suffix = { Text(stringResource(R.string.main_recent_rename_suffix)) },
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(nameInput) },
+                enabled = nameInput.trim().isNotEmpty()
+            ) {
+                Text(stringResource(R.string.main_recent_rename_confirm))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
 }
 
 private fun formatDate(timestamp: Long): String {

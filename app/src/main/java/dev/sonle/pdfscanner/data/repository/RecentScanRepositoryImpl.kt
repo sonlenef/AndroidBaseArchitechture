@@ -5,7 +5,9 @@ import dev.sonle.pdfscanner.data.local.RecentScanDao
 import dev.sonle.pdfscanner.data.model.RecentScanEntity
 import dev.sonle.pdfscanner.domain.model.RecentScan
 import dev.sonle.pdfscanner.domain.repository.RecentScanDeleteResult
+import dev.sonle.pdfscanner.domain.repository.RecentScanRenameResult
 import dev.sonle.pdfscanner.domain.repository.RecentScanRepository
+import dev.sonle.pdfscanner.domain.util.DocumentFileNameNormalizer
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import timber.log.Timber
@@ -36,6 +38,45 @@ class RecentScanRepositoryImpl(
 
     override suspend fun findRecentScanById(id: Long): RecentScan? =
         recentScanDao.getRecentScanById(id)?.toDomain()
+
+    override suspend fun renameRecentScanById(id: Long, newFileName: String): RecentScanRenameResult {
+        val normalizedName = DocumentFileNameNormalizer.normalize(newFileName)
+            ?: return RecentScanRenameResult.InvalidName
+
+        val entity = recentScanDao.getRecentScanById(id)
+            ?: return RecentScanRenameResult.NotFound
+
+        if (entity.fileName.equals(normalizedName, ignoreCase = true)) {
+            return RecentScanRenameResult.Success(entity.toDomain())
+        }
+
+        val currentFile = File(entity.filePath)
+        val parentDir = currentFile.parentFile
+            ?: return RecentScanRenameResult.Failed
+
+        val targetFile = File(parentDir, normalizedName)
+        if (targetFile.exists() && targetFile.absolutePath != currentFile.absolutePath) {
+            return RecentScanRenameResult.NameAlreadyExists
+        }
+
+        if (currentFile.exists()) {
+            val renamed = currentFile.renameTo(targetFile)
+            if (!renamed) {
+                Timber.e("Failed to rename PDF file: %s -> %s", currentFile.absolutePath, targetFile.absolutePath)
+                return RecentScanRenameResult.Failed
+            }
+        } else {
+            Timber.w("PDF file missing during rename: %s", entity.filePath)
+        }
+
+        val updatedEntity = entity.copy(
+            fileName = normalizedName,
+            filePath = targetFile.absolutePath,
+            fileSizeBytes = if (targetFile.exists()) targetFile.length() else entity.fileSizeBytes
+        )
+        recentScanDao.upsertRecentScan(updatedEntity)
+        return RecentScanRenameResult.Success(updatedEntity.toDomain())
+    }
 
     override suspend fun deleteRecentScanById(id: Long): RecentScanDeleteResult {
         val entity = recentScanDao.getRecentScanById(id)

@@ -159,6 +159,15 @@
     <string name="main_recent_scans_empty">No recent scans yet</string>
     <string name="main_recent_open">Open</string>
     <string name="main_recent_share">Share</string>
+    <string name="main_recent_rename">Rename</string>
+    <string name="main_recent_rename_title">Rename document</string>
+    <string name="main_recent_rename_label">File name</string>
+    <string name="main_recent_rename_suffix">.pdf</string>
+    <string name="main_recent_rename_confirm">Save</string>
+    <string name="main_recent_rename_success">Document renamed</string>
+    <string name="main_recent_rename_invalid">Enter a valid file name.</string>
+    <string name="main_recent_rename_exists">A document with this name already exists.</string>
+    <string name="main_recent_rename_failed">Could not rename document. Please try again.</string>
     <string name="main_recent_delete">Delete</string>
     <string name="main_recent_more_actions">More actions</string>
     <string name="main_recent_delete_title">Delete document?</string>
@@ -172,6 +181,13 @@
     <!-- Home documents & selection -->
     <string name="main_documents_title">My Documents</string>
     <string name="main_search_hint">Search documents</string>
+    <string name="main_search_clear">Clear search</string>
+    <string name="main_search_no_results_title">No matching documents</string>
+    <string name="main_search_no_results_message">Try another file name or clear your search to see all documents.</string>
+    <plurals name="main_search_results_count">
+        <item quantity="one">%d result</item>
+        <item quantity="other">%d results</item>
+    </plurals>
     <string name="main_empty_docs_title">No documents yet</string>
     <string name="main_empty_docs_message">You have no documents here. Tap the scan button below to capture your first document.</string>
     <string name="main_selection_select">Select</string>
