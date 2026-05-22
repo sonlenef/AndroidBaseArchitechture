@@ -96,6 +96,14 @@ class AnalyticsManager(
     }
     
     /**
+     * Enable or disable analytics collection (e.g. after Remote Config fetch).
+     */
+    fun setCollectionEnabled(enabled: Boolean) {
+        firebaseAnalytics.setAnalyticsCollectionEnabled(enabled)
+        Timber.d("Analytics collection enabled: $enabled")
+    }
+
+    /**
      * Set user ID
      */
     fun setUserId(userId: String) {

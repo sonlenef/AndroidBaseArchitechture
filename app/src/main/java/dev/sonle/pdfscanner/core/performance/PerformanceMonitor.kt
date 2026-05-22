@@ -1,117 +1,78 @@
 package dev.sonle.pdfscanner.core.performance
 
-// import com.google.firebase.performance.FirebasePerformance
-// import com.google.firebase.performance.metrics.Trace
+import com.google.firebase.perf.FirebasePerformance
 import dev.sonle.pdfscanner.core.config.EnvironmentConfig
 import timber.log.Timber
+
 /**
- * Performance monitoring manager for tracking app performance
+ * Performance monitoring manager for custom traces (user actions, network, screens).
  */
 class PerformanceMonitor(
-    // private val firebasePerformance: FirebasePerformance
+    private val firebasePerformance: FirebasePerformance
 ) {
-    
-    /**
-     * Start a trace for user actions
-     */
-    fun startUserActionTrace(actionName: String): Any? {
+
+    fun startUserActionTrace(actionName: String): PerformanceTraceHandle? {
         if (!EnvironmentConfig.performanceMonitoringEnabled) {
-            Timber.d("Performance monitoring disabled - would start trace: $actionName")
+            Timber.d("Performance monitoring disabled — user_action_$actionName")
             return null
         }
-        
+        return startTrace("user_action_$actionName")
+    }
+
+    fun startNetworkTrace(url: String): PerformanceTraceHandle? {
+        if (!EnvironmentConfig.performanceMonitoringEnabled) {
+            Timber.d("Performance monitoring disabled — network_request")
+            return null
+        }
         return try {
-            // val trace = firebasePerformance.newTrace("user_action_$actionName")
-            // trace.start()
-            Timber.d("Started performance trace: user_action_$actionName")
-            null // trace
+            val trace = firebasePerformance.newTrace("network_request")
+            trace.putAttribute("url", sanitizeUrl(url))
+            trace.start()
+            PerformanceTraceHandle(trace)
         } catch (e: Exception) {
-            Timber.e(e, "Failed to start performance trace: $actionName")
+            Timber.e(e, "Failed to start network trace")
             null
         }
     }
-    
-    /**
-     * Start a trace for network requests
-     */
-    fun startNetworkTrace(url: String): Any? {
+
+    fun startScreenTrace(screenName: String): PerformanceTraceHandle? {
         if (!EnvironmentConfig.performanceMonitoringEnabled) {
-            Timber.d("Performance monitoring disabled - would start network trace: $url")
+            Timber.d("Performance monitoring disabled — screen_$screenName")
             return null
         }
-        
+        return startTrace("screen_$screenName") {
+            putAttribute("screen_name", screenName)
+        }
+    }
+
+    fun stopTrace(handle: PerformanceTraceHandle?) {
+        handle?.stop()
+    }
+
+    fun addMetric(handle: PerformanceTraceHandle?, metricName: String, value: Long) {
+        // Metrics require holding the Trace reference; screen/user traces use attributes only.
+        Timber.d("Performance metric (trace stopped separately): $metricName = $value")
+    }
+
+    private inline fun startTrace(
+        traceName: String,
+        configure: com.google.firebase.perf.metrics.Trace.() -> Unit = {}
+    ): PerformanceTraceHandle? {
         return try {
-            // val trace = firebasePerformance.newTrace("network_request")
-            // trace.putAttribute("url", url)
-            // trace.start()
-            Timber.d("Started network performance trace: $url")
-            null // trace
+            val trace = firebasePerformance.newTrace(traceName)
+            trace.configure()
+            trace.start()
+            PerformanceTraceHandle(trace)
         } catch (e: Exception) {
-            Timber.e(e, "Failed to start network trace: $url")
+            Timber.e(e, "Failed to start performance trace: $traceName")
             null
         }
     }
-    
-    /**
-     * Start a trace for screen rendering
-     */
-    fun startScreenTrace(screenName: String): Any? {
-        if (!EnvironmentConfig.performanceMonitoringEnabled) {
-            Timber.d("Performance monitoring disabled - would start screen trace: $screenName")
-            return null
-        }
-        
-        return try {
-            // val trace = firebasePerformance.newTrace("screen_$screenName")
-            // trace.putAttribute("screen_name", screenName)
-            // trace.start()
-            Timber.d("Started screen performance trace: $screenName")
-            null // trace
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to start screen trace: $screenName")
-            null
-        }
-    }
-    
-    /**
-     * Stop a trace
-     */
-    fun stopTrace(trace: Any?) {
-        trace?.let {
-            try {
-                // it.stop()
-                Timber.d("Stopped performance trace: ${it.toString()}")
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to stop performance trace: ${it.toString()}")
-            }
-        }
-    }
-    
-    /**
-     * Add a metric to a trace
-     */
-    fun addMetric(trace: Any?, metricName: String, value: Long) {
-        trace?.let {
-            try {
-                // it.putMetric(metricName, value)
-                Timber.d("Added metric to trace ${it.toString()}: $metricName = $value")
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to add metric to trace: $metricName")
-            }
-        }
-    }
-    
-    /**
-     * Add an attribute to a trace
-     */
-    fun addAttribute(trace: Any?, attributeName: String, value: String) {
-        trace?.let {
-            try {
-                // it.putAttribute(attributeName, value)
-                Timber.d("Added attribute to trace ${it.toString()}: $attributeName = $value")
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to add attribute to trace: $attributeName")
-            }
-        }
+
+    private fun sanitizeUrl(url: String): String =
+        url.take(MAX_URL_ATTRIBUTE_LENGTH)
+
+    companion object {
+        private const val MAX_URL_ATTRIBUTE_LENGTH = 100
     }
 }

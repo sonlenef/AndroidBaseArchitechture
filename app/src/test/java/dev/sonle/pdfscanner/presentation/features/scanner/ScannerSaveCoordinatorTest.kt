@@ -1,6 +1,9 @@
 package dev.sonle.pdfscanner.presentation.features.scanner
 
 import android.graphics.Bitmap
+import dev.sonle.pdfscanner.core.analytics.AnalyticsManager
+import dev.sonle.pdfscanner.core.crashlytics.CrashlyticsManager
+import dev.sonle.pdfscanner.core.performance.PerformanceMonitor
 import dev.sonle.pdfscanner.domain.model.AppSettings
 import dev.sonle.pdfscanner.domain.model.ExportedPdf
 import dev.sonle.pdfscanner.domain.model.PdfExportError
@@ -31,10 +34,16 @@ class ScannerSaveCoordinatorTest {
             pdfOutputQuality = PdfOutputQuality.HIGH
         )
     }
+    private val analyticsManager: AnalyticsManager = mockk(relaxed = true)
+    private val crashlyticsManager: CrashlyticsManager = mockk(relaxed = true)
+    private val performanceMonitor: PerformanceMonitor = mockk(relaxed = true)
     private val coordinator = ScannerSaveCoordinator(
         savePdfUseCase,
         addRecentScanUseCase,
-        appSettingsRepository
+        appSettingsRepository,
+        analyticsManager,
+        crashlyticsManager,
+        performanceMonitor
     )
 
     @Test

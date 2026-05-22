@@ -24,6 +24,10 @@
 -keep class com.google.firebase.** { *; }
 -keep class com.google.android.gms.** { *; }
 
+# AdMob
+-keep class com.google.android.gms.ads.** { *; }
+-keep class com.google.ads.** { *; }
+
 # Keep Hilt classes
 -keep class dagger.hilt.** { *; }
 -keep class javax.inject.** { *; }

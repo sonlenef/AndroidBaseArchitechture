@@ -1,0 +1,54 @@
+{
+  "parameters": {
+    "feature_new_ui": {
+      "defaultValue": { "value": "false" }
+    },
+    "feature_advanced_search": {
+      "defaultValue": { "value": "false" }
+    },
+    "feature_dark_mode": {
+      "defaultValue": { "value": "true" }
+    },
+    "feature_offline_mode": {
+      "defaultValue": { "value": "false" }
+    },
+    "feature_biometric_auth": {
+      "defaultValue": { "value": "false" }
+    },
+    "api_timeout_seconds": {
+      "defaultValue": { "value": "30" }
+    },
+    "max_items_per_page": {
+      "defaultValue": { "value": "20" }
+    },
+    "maintenance_mode": {
+      "defaultValue": { "value": "false" }
+    },
+    "maintenance_message": {
+      "defaultValue": {
+        "value": "The app is currently under maintenance. Please try again later."
+      }
+    },
+    "enable_analytics": {
+      "defaultValue": { "value": "true" }
+    },
+    "enable_crashlytics": {
+      "defaultValue": { "value": "true" }
+    },
+    "enable_performance_monitoring": {
+      "defaultValue": { "value": "true" }
+    },
+    "enable_ads": {
+      "defaultValue": { "value": "true" }
+    },
+    "enable_banner_ads": {
+      "defaultValue": { "value": "true" }
+    },
+    "enable_interstitial_ads": {
+      "defaultValue": { "value": "false" }
+    },
+    "interstitial_cooldown_seconds": {
+      "defaultValue": { "value": "300" }
+    }
+  }
+}

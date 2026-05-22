@@ -1,29 +1,67 @@
 {
-    "project_info": {
-        "project_number": "555666777",
-        "project_id": "baseapp-prod",
-        "storage_bucket": "baseapp-prod.appspot.com"
-    },
-    "client": [
-        {
-            "client_info": {
-                "mobilesdk_app_id": "1:555666777:android:123456789abc",
-                "android_client_info": {
-                    "package_name": "dev.sonle.pdfscanner"
-                }
-            },
-            "oauth_client": [],
-            "api_key": [
-                {
-                    "current_key": "AIzaSyProdKey555666777"
-                }
-            ],
-            "services": {
-                "appinvite_service": {
-                    "other_platform_oauth_client": []
-                }
-            }
+  "project_info": {
+    "project_number": "1081452583057",
+    "project_id": "lzyscan",
+    "storage_bucket": "lzyscan.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1081452583057:android:90a690c71b5ee141a4c730",
+        "android_client_info": {
+          "package_name": "dev.sonle.pdfscanner"
         }
-    ],
-    "configuration_version": "1"
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAYjb-vNfJAN8XRa8MLEebWvd8UenV0iUQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1081452583057:android:cb22548d6ec8fd4ea4c730",
+        "android_client_info": {
+          "package_name": "dev.sonle.pdfscanner.dev"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAYjb-vNfJAN8XRa8MLEebWvd8UenV0iUQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1081452583057:android:2b6eccfbc8c89928a4c730",
+        "android_client_info": {
+          "package_name": "dev.sonle.pdfscanner.staging"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAYjb-vNfJAN8XRa8MLEebWvd8UenV0iUQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
 }

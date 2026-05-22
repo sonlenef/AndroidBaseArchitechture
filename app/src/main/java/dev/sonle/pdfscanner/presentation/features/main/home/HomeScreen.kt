@@ -95,7 +95,10 @@ import dev.sonle.pdfscanner.core.util.PdfExportActions
 import dev.sonle.pdfscanner.domain.model.RecentScan
 import dev.sonle.pdfscanner.domain.util.DocumentFileNameNormalizer
 import dev.sonle.pdfscanner.domain.navigation.PdfViewerScreenRoute
+import dev.sonle.pdfscanner.core.ads.AdPlacementPolicy
+import dev.sonle.pdfscanner.presentation.ads.AdUiStateHolder
 import dev.sonle.pdfscanner.presentation.navigation.LocalNavigator
+import org.koin.compose.koinInject
 import dev.sonle.pdfscanner.presentation.util.FormatUtils
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -147,8 +150,11 @@ fun HomeScreen(
         }
     }
 
+    val adUiStateHolder: AdUiStateHolder = koinInject()
+
     LaunchedEffect(uiState.isSelectionMode) {
         onSelectionModeChanged(uiState.isSelectionMode)
+        adUiStateHolder.setSelectionMode(uiState.isSelectionMode)
     }
 
     if (uiState.isSelectionMode) {
@@ -160,10 +166,18 @@ fun HomeScreen(
         }
     }
 
+    val bannerExtraPadding = if (
+        adUiStateHolder.adsEnabled && !uiState.isSelectionMode
+    ) {
+        AdPlacementPolicy.BANNER_SLOT_HEIGHT_DP.dp +
+            AdPlacementPolicy.MIN_CLICKABLE_SEPARATION_DP.dp
+    } else {
+        0.dp
+    }
     val listBottomPadding = if (uiState.isSelectionMode) {
         SelectionSheetListClearance
     } else {
-        HomeBottomNavClearance
+        HomeBottomNavClearance + bannerExtraPadding
     }
 
     Scaffold(

@@ -1,6 +1,7 @@
 package dev.sonle.pdfscanner.core.di
 
 import dev.sonle.pdfscanner.core.analytics.AnalyticsManager
+import dev.sonle.pdfscanner.core.config.FeatureFlags
 import dev.sonle.pdfscanner.core.config.RemoteConfigManager
 import dev.sonle.pdfscanner.core.crashlytics.CrashlyticsManager
 import dev.sonle.pdfscanner.core.fcm.NotificationHelper
@@ -32,6 +33,7 @@ val appModule = module {
     singleOf(::AnalyticsManager)
     singleOf(::CrashlyticsManager)
     singleOf(::RemoteConfigManager)
+    singleOf(::FeatureFlags)
     singleOf(::PerformanceMonitor)
     singleOf(::NotificationHelper)
 

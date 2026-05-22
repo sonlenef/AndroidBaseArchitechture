@@ -24,6 +24,10 @@
     <entry key="enable_analytics" value="true" />
     <entry key="enable_crashlytics" value="true" />
     <entry key="enable_performance_monitoring" value="true" />
+    <entry key="enable_ads" value="true" />
+    <entry key="enable_banner_ads" value="true" />
+    <entry key="enable_interstitial_ads" value="false" />
+    <entry key="interstitial_cooldown_seconds" value="300" />
     
     <!-- UI Configuration -->
     <entry key="default_theme" value="system" />

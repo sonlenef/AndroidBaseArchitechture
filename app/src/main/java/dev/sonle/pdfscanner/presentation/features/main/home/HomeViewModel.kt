@@ -4,6 +4,9 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.sonle.pdfscanner.R
+import dev.sonle.pdfscanner.core.analytics.AnalyticsManager
+import dev.sonle.pdfscanner.core.analytics.FirebaseAnalyticsEvents
+import dev.sonle.pdfscanner.core.crashlytics.CrashlyticsManager
 import dev.sonle.pdfscanner.domain.model.RecentScan
 import dev.sonle.pdfscanner.domain.repository.RecentScanDeleteResult
 import dev.sonle.pdfscanner.domain.repository.RecentScanRenameResult
@@ -48,7 +51,9 @@ class HomeViewModel(
     private val observeRecentScansUseCase: ObserveRecentScansUseCase,
     private val deleteRecentScanUseCase: DeleteRecentScanUseCase,
     private val deleteRecentScansUseCase: DeleteRecentScansUseCase,
-    private val renameRecentScanUseCase: RenameRecentScanUseCase
+    private val renameRecentScanUseCase: RenameRecentScanUseCase,
+    private val analyticsManager: AnalyticsManager,
+    private val crashlyticsManager: CrashlyticsManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -86,6 +91,7 @@ class HomeViewModel(
             if (state.isSelectionMode) {
                 state.copy(isSelectionMode = false, selectedScanIds = emptySet())
             } else {
+                analyticsManager.logEvent(FirebaseAnalyticsEvents.SELECTION_MODE_ENTERED)
                 state.copy(isSelectionMode = true, selectedScanIds = emptySet())
             }
         }
@@ -141,6 +147,12 @@ class HomeViewModel(
             } else {
                 state.selectedScanIds
             }
+            if (query.isNotBlank() && query != state.searchQuery) {
+                analyticsManager.logEvent(
+                    FirebaseAnalyticsEvents.SEARCH_PERFORMED,
+                    mapOf(FirebaseAnalyticsEvents.PARAM_QUERY_LENGTH to query.length)
+                )
+            }
             state.copy(
                 searchQuery = query,
                 selectedScanIds = prunedSelection
@@ -156,6 +168,7 @@ class HomeViewModel(
         viewModelScope.launch {
             when (renameRecentScanUseCase(id, newFileName)) {
                 is RecentScanRenameResult.Success -> {
+                    analyticsManager.logEvent(FirebaseAnalyticsEvents.DOCUMENT_RENAMED)
                     _uiEffects.send(HomeUiEffect.ShowMessage(R.string.main_recent_rename_success))
                 }
                 RecentScanRenameResult.NotFound -> {
@@ -179,7 +192,9 @@ class HomeViewModel(
     fun deleteRecentScan(id: Long) {
         viewModelScope.launch {
             when (val result = deleteRecentScanUseCase(id)) {
-                RecentScanDeleteResult.Success -> Unit
+                RecentScanDeleteResult.Success -> {
+                    analyticsManager.logEvent(FirebaseAnalyticsEvents.DOCUMENT_DELETED)
+                }
                 RecentScanDeleteResult.NotFound -> {
                     _uiState.update {
                         it.copy(errorMessageRes = R.string.main_recent_delete_not_found)
@@ -215,6 +230,12 @@ class HomeViewModel(
             }
             when {
                 result.deletedCount > 0 && !result.hasAnyFailure -> {
+                    analyticsManager.logEvent(
+                        FirebaseAnalyticsEvents.DOCUMENTS_BATCH_DELETED,
+                        mapOf(
+                            FirebaseAnalyticsEvents.PARAM_DOCUMENT_COUNT to result.deletedCount
+                        )
+                    )
                     _uiEffects.send(HomeUiEffect.DocumentsDeleted(result.deletedCount))
                 }
                 result.deletedCount > 0 && result.hasAnyFailure -> {

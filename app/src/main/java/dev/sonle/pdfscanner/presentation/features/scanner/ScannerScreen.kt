@@ -1,5 +1,6 @@
 package dev.sonle.pdfscanner.presentation.features.scanner
 
+import android.app.Activity
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.BackHandler
@@ -48,13 +49,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import dev.sonle.pdfscanner.R
+import dev.sonle.pdfscanner.core.ads.InterstitialAdController
 import dev.sonle.pdfscanner.core.util.PdfExportActions
+import dev.sonle.pdfscanner.presentation.ads.AdUiStateHolder
 import dev.sonle.pdfscanner.presentation.features.scanner.components.CameraView
 import dev.sonle.pdfscanner.presentation.features.scanner.components.CropEditorView
 import dev.sonle.pdfscanner.presentation.features.scanner.components.FilterEditorView
 import dev.sonle.pdfscanner.presentation.features.scanner.components.SaveSuccessView
 import dev.sonle.pdfscanner.presentation.features.scanner.model.PageMode
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 
 @Composable
 fun ScannerScreen(
@@ -67,6 +71,8 @@ fun ScannerScreen(
     val captureOverlay by viewModel.captureOverlay.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val adUiStateHolder: AdUiStateHolder = koinInject()
+    val interstitialAdController: InterstitialAdController = koinInject()
 
     LaunchedEffect(viewModel) {
         viewModel.uiEffects.collect { effect ->
@@ -237,7 +243,17 @@ fun ScannerScreen(
                 onContinue = viewModel::reset,
                 onBackHome = {
                     viewModel.reset()
-                    onNavigateBack()
+                    val activity = context as? Activity
+                    if (activity != null) {
+                        interstitialAdController.showIfEligible(
+                            activity = activity,
+                            adUnitId = adUiStateHolder.interstitialUnitId,
+                            adsEnabled = adUiStateHolder.adsEnabled,
+                            onFinished = onNavigateBack
+                        )
+                    } else {
+                        onNavigateBack()
+                    }
                 }
             )
         }

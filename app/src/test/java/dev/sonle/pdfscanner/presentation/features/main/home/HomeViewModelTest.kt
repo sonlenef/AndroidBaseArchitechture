@@ -1,6 +1,8 @@
 package dev.sonle.pdfscanner.presentation.features.main.home
 
 import app.cash.turbine.test
+import dev.sonle.pdfscanner.core.analytics.AnalyticsManager
+import dev.sonle.pdfscanner.core.crashlytics.CrashlyticsManager
 import dev.sonle.pdfscanner.domain.model.BatchDeleteRecentScansResult
 import dev.sonle.pdfscanner.domain.model.RecentScan
 import dev.sonle.pdfscanner.domain.repository.RecentScanDeleteResult
@@ -35,6 +37,8 @@ class HomeViewModelTest {
     private lateinit var deleteRecentScanUseCase: DeleteRecentScanUseCase
     private lateinit var deleteRecentScansUseCase: DeleteRecentScansUseCase
     private lateinit var renameRecentScanUseCase: RenameRecentScanUseCase
+    private lateinit var analyticsManager: AnalyticsManager
+    private lateinit var crashlyticsManager: CrashlyticsManager
 
     private val sampleScans = listOf(
         RecentScan(1, "A.pdf", "/a.pdf", 1, 100, 1),
@@ -48,6 +52,8 @@ class HomeViewModelTest {
         deleteRecentScanUseCase = mockk()
         deleteRecentScansUseCase = mockk()
         renameRecentScanUseCase = mockk()
+        analyticsManager = mockk(relaxed = true)
+        crashlyticsManager = mockk(relaxed = true)
         every { observeRecentScansUseCase() } returns MutableStateFlow(sampleScans)
         coEvery { renameRecentScanUseCase(any(), any()) } returns RecentScanRenameResult.Success(sampleScans[0])
         coEvery { deleteRecentScanUseCase(any()) } returns RecentScanDeleteResult.Success
@@ -64,7 +70,9 @@ class HomeViewModelTest {
             observeRecentScansUseCase,
             deleteRecentScanUseCase,
             deleteRecentScansUseCase,
-            renameRecentScanUseCase
+            renameRecentScanUseCase,
+            analyticsManager,
+            crashlyticsManager
         )
 
     @Test

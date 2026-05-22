@@ -12,6 +12,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -45,8 +46,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.github.yohannestz.iconsax_compose.iconsax.Iconsax
 import dev.sonle.pdfscanner.R
+import dev.sonle.pdfscanner.core.ads.AdPlacementPolicy
+import dev.sonle.pdfscanner.presentation.ads.AdUiStateHolder
+import dev.sonle.pdfscanner.presentation.ads.BannerAdSlot
 import dev.sonle.pdfscanner.presentation.features.main.home.HomeScreen
 import dev.sonle.pdfscanner.presentation.features.main.settings.SettingsScreen
+import org.koin.compose.koinInject
 
 @Composable
 fun MainScreen(
@@ -60,17 +65,27 @@ fun MainScreen(
         stringResource(R.string.main_tab_settings) to Iconsax.Linear.Setting
     )
     val showBottomBar = selectedTab != 0 || !isHomeSelectionMode
+    val adUiStateHolder: AdUiStateHolder = koinInject()
+    val bannerScreen = if (selectedTab == 0) {
+        AdPlacementPolicy.Screen.HOME
+    } else {
+        AdPlacementPolicy.Screen.SETTINGS
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
         bottomBar = {
             if (showBottomBar) {
-                CustomBottomNavigationBar(
-                    selectedTab = selectedTab,
-                    onTabSelected = { selectedTab = it },
-                    onOpenScanner = onOpenScanner,
-                    tabs = tabs
-                )
+                Column {
+                    BannerAdSlot(screen = bannerScreen)
+                    Spacer(modifier = Modifier.height(AdPlacementPolicy.MIN_CLICKABLE_SEPARATION_DP.dp))
+                    CustomBottomNavigationBar(
+                        selectedTab = selectedTab,
+                        onTabSelected = { selectedTab = it },
+                        onOpenScanner = onOpenScanner,
+                        tabs = tabs
+                    )
+                }
             }
         }
     ) { innerPadding ->

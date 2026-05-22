@@ -26,6 +26,11 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // Google AdMob — replace prod unit IDs in productFlavors when AdMob apps are approved.
+        manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
+        buildConfigField("String", "ADMOB_BANNER_UNIT_ID", "\"ca-app-pub-3940256099942544/6300978111\"")
+        buildConfigField("String", "ADMOB_INTERSTITIAL_UNIT_ID", "\"ca-app-pub-3940256099942544/1033173712\"")
     }
 
     flavorDimensions += "environment"
@@ -44,6 +49,8 @@ android {
             buildConfigField("boolean", "ENABLE_CRASHLYTICS", "false")
             buildConfigField("boolean", "ENABLE_ANALYTICS", "false")
             buildConfigField("boolean", "ENABLE_PERFORMANCE_MONITORING", "false")
+            buildConfigField("boolean", "ENABLE_ADS", "true")
+            buildConfigField("boolean", "USE_TEST_AD_UNITS", "true")
         }
         
         create("staging") {
@@ -60,6 +67,8 @@ android {
             buildConfigField("boolean", "ENABLE_CRASHLYTICS", "true")
             buildConfigField("boolean", "ENABLE_ANALYTICS", "true")
             buildConfigField("boolean", "ENABLE_PERFORMANCE_MONITORING", "true")
+            buildConfigField("boolean", "ENABLE_ADS", "true")
+            buildConfigField("boolean", "USE_TEST_AD_UNITS", "true")
         }
         
         create("prod") {
@@ -74,6 +83,11 @@ android {
             buildConfigField("boolean", "ENABLE_CRASHLYTICS", "true")
             buildConfigField("boolean", "ENABLE_ANALYTICS", "true")
             buildConfigField("boolean", "ENABLE_PERFORMANCE_MONITORING", "true")
+            buildConfigField("boolean", "ENABLE_ADS", "true")
+            buildConfigField("boolean", "USE_TEST_AD_UNITS", "false")
+            // TODO: Replace with production AdMob unit IDs from https://admob.google.com (app lzyscan)
+            buildConfigField("String", "ADMOB_BANNER_UNIT_ID", "\"ca-app-pub-3940256099942544/6300978111\"")
+            buildConfigField("String", "ADMOB_INTERSTITIAL_UNIT_ID", "\"ca-app-pub-3940256099942544/1033173712\"")
         }
     }
 
@@ -175,6 +189,10 @@ dependencies {
     implementation(libs.firebase.crashlytics)
     implementation(libs.firebase.config)
     implementation(libs.firebase.perf)
+
+    // Google Ads (AdMob) + consent (UMP)
+    implementation(libs.play.services.ads)
+    implementation(libs.user.messaging.platform)
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)

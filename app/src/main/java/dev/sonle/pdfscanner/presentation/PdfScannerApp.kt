@@ -12,6 +12,7 @@ import androidx.navigation.compose.rememberNavController
 import dev.sonle.pdfscanner.domain.model.AppSettings
 import dev.sonle.pdfscanner.domain.model.ThemeMode
 import dev.sonle.pdfscanner.domain.usecase.ObserveAppSettingsUseCase
+import dev.sonle.pdfscanner.presentation.components.MaintenanceModeGate
 import dev.sonle.pdfscanner.presentation.navigation.AppNavigation
 import dev.sonle.pdfscanner.presentation.theme.AndroidBaseArchitechtureTheme
 import org.koin.compose.koinInject
@@ -37,8 +38,10 @@ fun PdfScannerApp(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            val navController = rememberNavController()
-            AppNavigation(navController = navController)
+            MaintenanceModeGate {
+                val navController = rememberNavController()
+                AppNavigation(navController = navController)
+            }
         }
     }
 }
