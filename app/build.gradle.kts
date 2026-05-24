@@ -28,7 +28,7 @@ android {
         }
 
         // Google AdMob — replace prod unit IDs in productFlavors when AdMob apps are approved.
-        manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
+        manifestPlaceholders["admobAppId"] = "ca-app-pub-9782307752944150~2894429670"
         buildConfigField("String", "ADMOB_BANNER_UNIT_ID", "\"ca-app-pub-3940256099942544/6300978111\"")
         buildConfigField("String", "ADMOB_INTERSTITIAL_UNIT_ID", "\"ca-app-pub-3940256099942544/1033173712\"")
     }
@@ -49,7 +49,7 @@ android {
             buildConfigField("boolean", "ENABLE_CRASHLYTICS", "false")
             buildConfigField("boolean", "ENABLE_ANALYTICS", "false")
             buildConfigField("boolean", "ENABLE_PERFORMANCE_MONITORING", "false")
-            buildConfigField("boolean", "ENABLE_ADS", "true")
+            buildConfigField("boolean", "ENABLE_ADS", "false")
             buildConfigField("boolean", "USE_TEST_AD_UNITS", "true")
         }
         
@@ -67,7 +67,7 @@ android {
             buildConfigField("boolean", "ENABLE_CRASHLYTICS", "true")
             buildConfigField("boolean", "ENABLE_ANALYTICS", "true")
             buildConfigField("boolean", "ENABLE_PERFORMANCE_MONITORING", "true")
-            buildConfigField("boolean", "ENABLE_ADS", "true")
+            buildConfigField("boolean", "ENABLE_ADS", "false")
             buildConfigField("boolean", "USE_TEST_AD_UNITS", "true")
         }
         
@@ -85,9 +85,8 @@ android {
             buildConfigField("boolean", "ENABLE_PERFORMANCE_MONITORING", "true")
             buildConfigField("boolean", "ENABLE_ADS", "true")
             buildConfigField("boolean", "USE_TEST_AD_UNITS", "false")
-            // TODO: Replace with production AdMob unit IDs from https://admob.google.com (app lzyscan)
-            buildConfigField("String", "ADMOB_BANNER_UNIT_ID", "\"ca-app-pub-3940256099942544/6300978111\"")
-            buildConfigField("String", "ADMOB_INTERSTITIAL_UNIT_ID", "\"ca-app-pub-3940256099942544/1033173712\"")
+            buildConfigField("String", "ADMOB_BANNER_UNIT_ID", "\"ca-app-pub-9782307752944150/8228619625\"")
+            buildConfigField("String", "ADMOB_INTERSTITIAL_UNIT_ID", "\"ca-app-pub-9782307752944150/5842506738\"")
         }
     }
 
@@ -147,6 +146,7 @@ android {
 dependencies {
     // Core Android
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)

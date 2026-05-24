@@ -14,7 +14,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import dev.sonle.pdfscanner.R
 import dev.sonle.pdfscanner.util.ResponsiveUtils
 
 /**
@@ -55,7 +57,7 @@ fun CustomButton(
                     strokeWidth = 2.dp
                 )
                 Text(
-                    text = "Loading...",
+                    text = stringResource(R.string.loading),
                     style = MaterialTheme.typography.labelLarge
                 )
             }

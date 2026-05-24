@@ -13,6 +13,7 @@ import dev.sonle.pdfscanner.domain.model.AppSettings
 import dev.sonle.pdfscanner.domain.model.ThemeMode
 import dev.sonle.pdfscanner.domain.usecase.ObserveAppSettingsUseCase
 import dev.sonle.pdfscanner.presentation.components.MaintenanceModeGate
+import dev.sonle.pdfscanner.presentation.locale.LocalizedAppContent
 import dev.sonle.pdfscanner.presentation.navigation.AppNavigation
 import dev.sonle.pdfscanner.presentation.theme.AndroidBaseArchitechtureTheme
 import org.koin.compose.koinInject
@@ -30,17 +31,19 @@ fun PdfScannerApp(
         ThemeMode.DARK -> true
     }
 
-    AndroidBaseArchitechtureTheme(
-        darkTheme = darkTheme,
-        dynamicColor = settings.useDynamicColor
-    ) {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
+    LocalizedAppContent {
+        AndroidBaseArchitechtureTheme(
+            darkTheme = darkTheme,
+            dynamicColor = settings.useDynamicColor
         ) {
-            MaintenanceModeGate {
-                val navController = rememberNavController()
-                AppNavigation(navController = navController)
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background
+            ) {
+                MaintenanceModeGate {
+                    val navController = rememberNavController()
+                    AppNavigation(navController = navController)
+                }
             }
         }
     }

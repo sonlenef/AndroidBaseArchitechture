@@ -315,7 +315,13 @@ fun CameraView(
 
             // Auto or manual text toggle
             GlassTextButton(
-                text = if (scannerMode == ScannerMode.AUTO) "AUTO" else "MANUAL",
+                text = stringResource(
+                    if (scannerMode == ScannerMode.AUTO) {
+                        R.string.scanner_mode_auto
+                    } else {
+                        R.string.scanner_mode_manual
+                    }
+                ).uppercase(),
                 isActive = scannerMode == ScannerMode.AUTO,
                 enabled = !isCapturePipelineRunning,
                 onClick = onToggleScannerMode

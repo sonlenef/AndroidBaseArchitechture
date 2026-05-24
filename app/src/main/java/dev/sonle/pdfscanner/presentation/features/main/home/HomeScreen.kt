@@ -92,7 +92,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.yohannestz.iconsax_compose.iconsax.Iconsax
 import dev.sonle.pdfscanner.R
 import dev.sonle.pdfscanner.core.util.PdfExportActions
+import dev.sonle.pdfscanner.domain.model.AppLanguage
 import dev.sonle.pdfscanner.domain.model.RecentScan
+import dev.sonle.pdfscanner.presentation.locale.labelResId
 import dev.sonle.pdfscanner.domain.util.DocumentFileNameNormalizer
 import dev.sonle.pdfscanner.domain.navigation.PdfViewerScreenRoute
 import dev.sonle.pdfscanner.core.ads.AdPlacementPolicy
@@ -106,6 +108,9 @@ import java.text.DateFormat
 
 /** Space reserved above the main bottom navigation bar (incl. FAB offset). */
 private val HomeBottomNavClearance = 96.dp
+
+private val HomeTitleToSearchSpacing = 20.dp
+private val HomeSearchToListSpacing = 32.dp
 
 private val SelectionSheetTopRadius = 24.dp
 private val SelectionSheetContentHeight = 88.dp
@@ -201,14 +206,16 @@ fun HomeScreen(
                     isAllSelected = uiState.isAllSelected,
                     canSelectAll = uiState.canSelectAll,
                     isBulkActionInProgress = uiState.isBulkActionInProgress,
+                    selectedLanguage = uiState.appLanguage,
                     onDismissKeyboard = dismissKeyboard,
-                    onToggleSelectionMode = viewModel::toggleSelectionMode,
+                    onLanguageSelected = viewModel::onLanguageSelected,
                     onExitSelectionMode = viewModel::exitSelectionMode,
                     onToggleSelectAll = viewModel::toggleSelectAll
                 )
 
                 AnimatedVisibility(visible = !uiState.isSelectionMode) {
                     Column {
+                        Spacer(modifier = Modifier.height(HomeTitleToSearchSpacing))
                         HomeSearchBar(
                             query = uiState.searchQuery,
                             onQueryChange = viewModel::updateSearchQuery,
@@ -230,7 +237,7 @@ fun HomeScreen(
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(HomeSearchToListSpacing))
 
                 uiState.errorMessageRes?.let { messageRes ->
                     Text(
@@ -410,8 +417,9 @@ private fun HomeTopBar(
     isAllSelected: Boolean,
     canSelectAll: Boolean,
     isBulkActionInProgress: Boolean,
+    selectedLanguage: AppLanguage,
     onDismissKeyboard: () -> Unit,
-    onToggleSelectionMode: () -> Unit,
+    onLanguageSelected: (AppLanguage) -> Unit,
     onExitSelectionMode: () -> Unit,
     onToggleSelectAll: () -> Unit
 ) {
@@ -484,14 +492,70 @@ private fun HomeTopBar(
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
-            TextButton(onClick = {
+            HomeLanguageSelector(
+                selectedLanguage = selectedLanguage,
+                onDismissKeyboard = onDismissKeyboard,
+                onLanguageSelected = onLanguageSelected
+            )
+        }
+    }
+}
+
+@Composable
+private fun HomeLanguageSelector(
+    selectedLanguage: AppLanguage,
+    onDismissKeyboard: () -> Unit,
+    onLanguageSelected: (AppLanguage) -> Unit
+) {
+    var menuExpanded by remember { mutableStateOf(false) }
+
+    Box {
+        TextButton(
+            onClick = {
                 onDismissKeyboard()
-                onToggleSelectionMode()
-            }) {
-                Text(
-                    text = stringResource(R.string.main_selection_select),
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold
+                menuExpanded = true
+            }
+        ) {
+            Icon(
+                imageVector = Iconsax.Linear.Global,
+                contentDescription = stringResource(R.string.language_action),
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = stringResource(selectedLanguage.labelResId()),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        DropdownMenu(
+            expanded = menuExpanded,
+            onDismissRequest = { menuExpanded = false }
+        ) {
+            Text(
+                text = stringResource(R.string.language_menu_title),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+            AppLanguage.entries.forEach { language ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = stringResource(language.labelResId()),
+                            fontWeight = if (language == selectedLanguage) {
+                                FontWeight.Bold
+                            } else {
+                                FontWeight.Normal
+                            }
+                        )
+                    },
+                    onClick = {
+                        menuExpanded = false
+                        onLanguageSelected(language)
+                    }
                 )
             }
         }

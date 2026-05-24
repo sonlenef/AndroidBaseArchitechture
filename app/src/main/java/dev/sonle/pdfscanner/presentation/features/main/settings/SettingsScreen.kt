@@ -69,6 +69,8 @@ fun SettingsScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
+    val versionLabel = rememberAppVersionLabel()
+    val environmentLabel = rememberEnvironmentLabel()
 
     LaunchedEffect(viewModel) {
         viewModel.uiEffects.collect { effect ->
@@ -91,6 +93,18 @@ fun SettingsScreen(
                                 context.getString(R.string.settings_play_store_unavailable)
                             )
                         }
+                    }
+                }
+                SettingsUiEffect.OpenPrivacyPolicy -> {
+                    val privacyUri = Uri.parse(
+                        "https://sonlenef.github.io/AndroidBaseArchitechture/privacy_policy.html"
+                    )
+                    runCatching {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, privacyUri))
+                    }.onFailure {
+                        snackbarHostState.showSnackbar(
+                            context.getString(R.string.settings_privacy_policy_error)
+                        )
                     }
                 }
             }
@@ -223,9 +237,16 @@ fun SettingsScreen(
                     )
                     SettingsDivider()
                     SettingNavigationRow(
+                        icon = Iconsax.Bold.Shield,
+                        title = stringResource(R.string.settings_privacy_policy),
+                        subtitle = stringResource(R.string.settings_privacy_policy_desc),
+                        onClick = viewModel::onPrivacyPolicyClick
+                    )
+                    SettingsDivider()
+                    SettingNavigationRow(
                         icon = Iconsax.Bold.InfoCircle,
                         title = stringResource(R.string.settings_about),
-                        subtitle = uiState.versionLabel,
+                        subtitle = versionLabel,
                         onClick = viewModel::showAboutDialog
                     )
                 }
@@ -300,8 +321,8 @@ fun SettingsScreen(
                 Text(
                     stringResource(
                         R.string.settings_about_message,
-                        uiState.versionLabel,
-                        BuildConfig.ENVIRONMENT
+                        versionLabel,
+                        environmentLabel
                     )
                 )
             },
@@ -539,6 +560,23 @@ private fun <T> SelectionSheetContent(
             }
         }
     }
+}
+
+@Composable
+private fun rememberAppVersionLabel(): String {
+    val suffix = when (BuildConfig.ENVIRONMENT) {
+        "development" -> stringResource(R.string.settings_version_suffix_dev)
+        "staging" -> stringResource(R.string.settings_version_suffix_staging)
+        else -> ""
+    }
+    return stringResource(R.string.settings_version_label, BuildConfig.VERSION_NAME + suffix)
+}
+
+@Composable
+private fun rememberEnvironmentLabel(): String = when (BuildConfig.ENVIRONMENT) {
+    "development" -> stringResource(R.string.settings_environment_development)
+    "staging" -> stringResource(R.string.settings_environment_staging)
+    else -> stringResource(R.string.settings_environment_production)
 }
 
 @Composable

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import dev.sonle.pdfscanner.core.util.Constants
+import dev.sonle.pdfscanner.domain.model.AppLanguage
 import dev.sonle.pdfscanner.domain.model.AppSettings
 import dev.sonle.pdfscanner.domain.model.DocumentFilterPreset
 import dev.sonle.pdfscanner.domain.model.PdfOutputQuality
@@ -33,6 +34,7 @@ class AppSettingsPreferences(
     fun readSettings(): AppSettings = AppSettings(
         themeMode = prefs.getString(KEY_THEME, null)?.toThemeMode() ?: ThemeMode.SYSTEM,
         useDynamicColor = prefs.getBoolean(KEY_DYNAMIC_COLOR, true),
+        appLanguage = AppLanguage.fromStoredValue(prefs.getString(KEY_APP_LANGUAGE, null)),
         defaultCaptureMode = prefs.getString(KEY_CAPTURE_MODE, null)?.toCaptureMode()
             ?: ScannerCaptureMode.AUTO,
         defaultPageLayout = prefs.getString(KEY_PAGE_LAYOUT, null)?.toPageLayout()
@@ -47,6 +49,7 @@ class AppSettingsPreferences(
         prefs.edit {
             putString(KEY_THEME, settings.themeMode.name)
             putBoolean(KEY_DYNAMIC_COLOR, settings.useDynamicColor)
+            putString(KEY_APP_LANGUAGE, settings.appLanguage.name)
             putString(KEY_CAPTURE_MODE, settings.defaultCaptureMode.name)
             putString(KEY_PAGE_LAYOUT, settings.defaultPageLayout.name)
             putString(KEY_DEFAULT_FILTER, settings.defaultFilter.name)
@@ -72,6 +75,7 @@ class AppSettingsPreferences(
     companion object {
         private const val KEY_THEME = "settings_theme_mode"
         private const val KEY_DYNAMIC_COLOR = "settings_dynamic_color"
+        private const val KEY_APP_LANGUAGE = "settings_app_language"
         private const val KEY_CAPTURE_MODE = "settings_capture_mode"
         private const val KEY_PAGE_LAYOUT = "settings_page_layout"
         private const val KEY_DEFAULT_FILTER = "settings_default_filter"

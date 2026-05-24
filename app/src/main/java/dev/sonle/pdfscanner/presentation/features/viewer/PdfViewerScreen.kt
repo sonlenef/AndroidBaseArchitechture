@@ -13,7 +13,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -33,8 +32,8 @@ fun PdfViewerScreen(
     var pdfRenderer by remember { mutableStateOf<PdfRenderer?>(null) }
     var fileDescriptor by remember { mutableStateOf<ParcelFileDescriptor?>(null) }
     var pageCount by remember { mutableIntStateOf(0) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    val context = LocalContext.current
+    var errorMessageResId by remember { mutableStateOf<Int?>(null) }
+    var errorDetail by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(filePath) {
         withContext(Dispatchers.IO) {
@@ -44,12 +43,16 @@ fun PdfViewerScreen(
                     fileDescriptor = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
                     pdfRenderer = PdfRenderer(fileDescriptor!!)
                     pageCount = pdfRenderer?.pageCount ?: 0
+                    errorMessageResId = null
+                    errorDetail = null
                 } else {
-                    errorMessage = context.getString(R.string.viewer_file_not_found)
+                    errorMessageResId = R.string.viewer_file_not_found
+                    errorDetail = null
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                errorMessage = e.message
+                errorMessageResId = null
+                errorDetail = e.message
             }
         }
     }
@@ -85,10 +88,13 @@ fun PdfViewerScreen(
             )
         }
     ) { paddingValues ->
-        if (errorMessage != null) {
+        if (errorMessageResId != null || errorDetail != null) {
             Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
                 Text(
-                    text = stringResource(R.string.viewer_error_prefix, errorMessage.orEmpty()),
+                    text = when {
+                        errorMessageResId != null -> stringResource(errorMessageResId!!)
+                        else -> stringResource(R.string.viewer_error_prefix, errorDetail.orEmpty())
+                    },
                     color = MaterialTheme.colorScheme.error
                 )
             }

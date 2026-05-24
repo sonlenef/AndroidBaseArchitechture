@@ -112,7 +112,7 @@ jobs:
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
-          packageName: dev.sonle.androidbasearchitechture
+          packageName: dev.sonle.pdfscanner
           releaseFiles: app/build/outputs/apk/prod/release/app-prod-release.apk
           track: production
           status: completed

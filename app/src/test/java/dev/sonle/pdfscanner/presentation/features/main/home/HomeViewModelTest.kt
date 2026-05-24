@@ -3,7 +3,12 @@ package dev.sonle.pdfscanner.presentation.features.main.home
 import app.cash.turbine.test
 import dev.sonle.pdfscanner.core.analytics.AnalyticsManager
 import dev.sonle.pdfscanner.core.crashlytics.CrashlyticsManager
+import dev.sonle.pdfscanner.core.locale.AppLocaleApplicator
+import dev.sonle.pdfscanner.domain.model.AppLanguage
+import dev.sonle.pdfscanner.domain.model.AppSettings
 import dev.sonle.pdfscanner.domain.model.BatchDeleteRecentScansResult
+import dev.sonle.pdfscanner.domain.usecase.ObserveAppSettingsUseCase
+import dev.sonle.pdfscanner.domain.usecase.UpdateAppSettingsUseCase
 import dev.sonle.pdfscanner.domain.model.RecentScan
 import dev.sonle.pdfscanner.domain.repository.RecentScanDeleteResult
 import dev.sonle.pdfscanner.domain.usecase.DeleteRecentScanUseCase
@@ -34,6 +39,10 @@ class HomeViewModelTest {
 
     private val dispatcher = StandardTestDispatcher()
     private lateinit var observeRecentScansUseCase: ObserveRecentScansUseCase
+    private lateinit var observeAppSettingsUseCase: ObserveAppSettingsUseCase
+    private lateinit var updateAppSettingsUseCase: UpdateAppSettingsUseCase
+    private lateinit var appLocaleApplicator: AppLocaleApplicator
+    private val settingsFlow = MutableStateFlow(AppSettings.Default)
     private lateinit var deleteRecentScanUseCase: DeleteRecentScanUseCase
     private lateinit var deleteRecentScansUseCase: DeleteRecentScansUseCase
     private lateinit var renameRecentScanUseCase: RenameRecentScanUseCase
@@ -49,6 +58,10 @@ class HomeViewModelTest {
     fun setup() {
         Dispatchers.setMain(dispatcher)
         observeRecentScansUseCase = mockk()
+        observeAppSettingsUseCase = mockk()
+        updateAppSettingsUseCase = mockk(relaxed = true)
+        appLocaleApplicator = mockk(relaxed = true)
+        every { observeAppSettingsUseCase() } returns settingsFlow
         deleteRecentScanUseCase = mockk()
         deleteRecentScansUseCase = mockk()
         renameRecentScanUseCase = mockk()
@@ -68,9 +81,12 @@ class HomeViewModelTest {
     private fun createViewModel(): HomeViewModel =
         HomeViewModel(
             observeRecentScansUseCase,
+            observeAppSettingsUseCase,
+            updateAppSettingsUseCase,
             deleteRecentScanUseCase,
             deleteRecentScansUseCase,
             renameRecentScanUseCase,
+            appLocaleApplicator,
             analyticsManager,
             crashlyticsManager
         )
@@ -195,6 +211,21 @@ class HomeViewModelTest {
             assertTrue(awaitItem() is HomeUiEffect.ShowMessage)
             coVerify(exactly = 1) { renameRecentScanUseCase(1, "Renamed") }
         }
+    }
+
+    @Test
+    fun `onLanguageSelected should persist settings and apply locale`() = runTest {
+        val viewModel = createViewModel()
+        dispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.onLanguageSelected(AppLanguage.VIETNAMESE)
+        dispatcher.scheduler.advanceUntilIdle()
+
+        coVerify(exactly = 1) {
+            updateAppSettingsUseCase(AppSettings.Default.copy(appLanguage = AppLanguage.VIETNAMESE))
+        }
+        coVerify(exactly = 1) { appLocaleApplicator.applyInApp(AppLanguage.VIETNAMESE) }
+        assertEquals(AppLanguage.VIETNAMESE, viewModel.uiState.value.appLanguage)
     }
 
     @Test

@@ -4,6 +4,9 @@ import android.app.Application
 import android.os.StrictMode
 import dev.sonle.pdfscanner.core.analytics.AnalyticsManager
 import dev.sonle.pdfscanner.core.config.EnvironmentConfig
+import dev.sonle.pdfscanner.core.locale.AppLocaleApplicator
+import dev.sonle.pdfscanner.data.local.AppSettingsPreferences
+import org.koin.core.context.GlobalContext
 import dev.sonle.pdfscanner.core.config.RemoteConfigManager
 import dev.sonle.pdfscanner.core.crashlytics.CrashlyticsManager
 import dev.sonle.pdfscanner.core.di.adsModule
@@ -61,6 +64,8 @@ class MyApplication : Application() {
             )
         }
 
+        applyStoredAppLanguage()
+
         configureEnvironment()
         initializeLogging()
 
@@ -114,6 +119,12 @@ class MyApplication : Application() {
                     .build()
             )
         }
+    }
+
+    private fun applyStoredAppLanguage() {
+        val settings = AppSettingsPreferences(this).readSettings()
+        GlobalContext.get().get<AppLocaleApplicator>()
+            .applyForColdStart(settings.appLanguage)
     }
 
     private fun initializeLogging() {

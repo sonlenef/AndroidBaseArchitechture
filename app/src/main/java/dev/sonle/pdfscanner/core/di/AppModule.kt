@@ -5,6 +5,8 @@ import dev.sonle.pdfscanner.core.config.FeatureFlags
 import dev.sonle.pdfscanner.core.config.RemoteConfigManager
 import dev.sonle.pdfscanner.core.crashlytics.CrashlyticsManager
 import dev.sonle.pdfscanner.core.fcm.NotificationHelper
+import dev.sonle.pdfscanner.core.locale.AppLocaleApplicator
+import dev.sonle.pdfscanner.core.locale.AppLocaleController
 import dev.sonle.pdfscanner.core.performance.PerformanceMonitor
 import dev.sonle.pdfscanner.domain.usecase.SavePdfUseCase
 import dev.sonle.pdfscanner.domain.usecase.ObserveRecentScansUseCase
@@ -36,6 +38,8 @@ val appModule = module {
     singleOf(::FeatureFlags)
     singleOf(::PerformanceMonitor)
     singleOf(::NotificationHelper)
+    singleOf(::AppLocaleController)
+    singleOf(::AppLocaleApplicator)
 
     // Use Cases
     factoryOf(::SavePdfUseCase)

@@ -3,6 +3,7 @@ package dev.sonle.pdfscanner.domain.model
 data class AppSettings(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val useDynamicColor: Boolean = true,
+    val appLanguage: AppLanguage = AppLanguage.ENGLISH,
     val defaultCaptureMode: ScannerCaptureMode = ScannerCaptureMode.AUTO,
     val defaultPageLayout: ScanPageLayout = ScanPageLayout.SINGLE,
     val defaultFilter: DocumentFilterPreset = DocumentFilterPreset.SHARPEN,

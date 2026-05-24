@@ -7,7 +7,12 @@ import dev.sonle.pdfscanner.R
 import dev.sonle.pdfscanner.core.analytics.AnalyticsManager
 import dev.sonle.pdfscanner.core.analytics.FirebaseAnalyticsEvents
 import dev.sonle.pdfscanner.core.crashlytics.CrashlyticsManager
+import dev.sonle.pdfscanner.core.locale.AppLocaleApplicator
+import dev.sonle.pdfscanner.domain.model.AppLanguage
+import dev.sonle.pdfscanner.domain.model.AppSettings
 import dev.sonle.pdfscanner.domain.model.RecentScan
+import dev.sonle.pdfscanner.domain.usecase.ObserveAppSettingsUseCase
+import dev.sonle.pdfscanner.domain.usecase.UpdateAppSettingsUseCase
 import dev.sonle.pdfscanner.domain.repository.RecentScanDeleteResult
 import dev.sonle.pdfscanner.domain.repository.RecentScanRenameResult
 import dev.sonle.pdfscanner.domain.usecase.DeleteRecentScanUseCase
@@ -30,6 +35,7 @@ data class HomeUiState(
     val isSelectionMode: Boolean = false,
     val selectedScanIds: Set<Long> = emptySet(),
     val isBulkActionInProgress: Boolean = false,
+    val appLanguage: AppLanguage = AppLanguage.ENGLISH,
     @StringRes val errorMessageRes: Int? = null
 ) {
     val displayedScans: List<RecentScan> =
@@ -49,9 +55,12 @@ data class HomeUiState(
 
 class HomeViewModel(
     private val observeRecentScansUseCase: ObserveRecentScansUseCase,
+    private val observeAppSettingsUseCase: ObserveAppSettingsUseCase,
+    private val updateAppSettingsUseCase: UpdateAppSettingsUseCase,
     private val deleteRecentScanUseCase: DeleteRecentScanUseCase,
     private val deleteRecentScansUseCase: DeleteRecentScansUseCase,
     private val renameRecentScanUseCase: RenameRecentScanUseCase,
+    private val appLocaleApplicator: AppLocaleApplicator,
     private val analyticsManager: AnalyticsManager,
     private val crashlyticsManager: CrashlyticsManager
 ) : ViewModel() {
@@ -62,8 +71,30 @@ class HomeViewModel(
     private val _uiEffects = Channel<HomeUiEffect>(Channel.BUFFERED)
     val uiEffects = _uiEffects.receiveAsFlow()
 
+    private var latestSettings: AppSettings = AppSettings.Default
+
     init {
         observeRecentScans()
+        observeAppSettings()
+    }
+
+    private fun observeAppSettings() {
+        viewModelScope.launch {
+            observeAppSettingsUseCase().collect { settings ->
+                latestSettings = settings
+                _uiState.update { it.copy(appLanguage = settings.appLanguage) }
+            }
+        }
+    }
+
+    fun onLanguageSelected(language: AppLanguage) {
+        if (language == _uiState.value.appLanguage) return
+        viewModelScope.launch {
+            val updated = latestSettings.copy(appLanguage = language)
+            updateAppSettingsUseCase(updated)
+            _uiState.update { it.copy(appLanguage = language) }
+            appLocaleApplicator.applyInApp(language)
+        }
     }
 
     private fun observeRecentScans() {

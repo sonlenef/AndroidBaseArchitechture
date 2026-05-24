@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inspect User Screenshots</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f1f5f9;
+            margin: 0;
+            padding: 40px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 2.5rem;
+            background: linear-gradient(to right, #60a5fa, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .card {
+            background-color: #1e293b;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            text-align: center;
+        }
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 2px solid #334155;
+            height: auto;
+            max-height: 500px;
+            object-fit: contain;
+            margin-bottom: 15px;
+        }
+        .name {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #e2e8f0;
+        }
+        .size {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>PDF Scanner - Inspect User Screenshots</h1>
+    <div class="grid">
+        <div class="card">
+            <img src="Screenshot_20260522-101713.png" alt="Screenshot 101713">
+            <div class="name">Screenshot_20260522-101713.png</div>
+            <div class="size">Welcome / Login / Home Empty?</div>
+        </div>
+        <div class="card">
+            <img src="Screenshot_20260522-101733.png" alt="Screenshot 101733">
+            <div class="name">Screenshot_20260522-101733.png</div>
+            <div class="size">Home Screen / Welcome Back / Empty State?</div>
+        </div>
+        <div class="card">
+            <img src="Screenshot_20260522-101746.png" alt="Screenshot 101746">
+            <div class="name">Screenshot_20260522-101746.png</div>
+            <div class="size">Home Documents list?</div>
+        </div>
+        <div class="card">
+            <img src="Screenshot_20260522-101805.png" alt="Screenshot 101805">
+            <div class="name">Screenshot_20260522-101805.png</div>
+            <div class="size">Camera Scan Screen?</div>
+        </div>
+        <div class="card">
+            <img src="Screenshot_20260522-101841.png" alt="Screenshot 101841">
+            <div class="name">Screenshot_20260522-101841.png</div>
+            <div class="size">Crop / Edge Adjust Screen?</div>
+        </div>
+        <div class="card">
+            <img src="Screenshot_20260522-101851.png" alt="Screenshot 101851">
+            <div class="name">Screenshot_20260522-101851.png</div>
+            <div class="size">Filter / Colors Screen?</div>
+        </div>
+    </div>
+</body>
+</html>

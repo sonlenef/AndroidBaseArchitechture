@@ -3,7 +3,6 @@ package dev.sonle.pdfscanner.presentation.features.main.settings
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.sonle.pdfscanner.BuildConfig
 import dev.sonle.pdfscanner.R
 import dev.sonle.pdfscanner.domain.model.AppSettings
 import dev.sonle.pdfscanner.domain.model.DocumentFilterPreset
@@ -30,7 +29,6 @@ data class SettingsUiState(
     val scanFileCount: Int = 0,
     val storageBytes: Long = 0L,
     val isLoadingStorage: Boolean = true,
-    val versionLabel: String = "",
     val isClearingStorage: Boolean = false,
     val activeSheet: SettingsSheet? = null,
     val showAboutDialog: Boolean = false,
@@ -48,6 +46,7 @@ sealed interface SettingsSheet {
 sealed interface SettingsUiEffect {
     data class ShowMessage(@StringRes val messageResId: Int) : SettingsUiEffect
     data object OpenPlayStore : SettingsUiEffect
+    data object OpenPrivacyPolicy : SettingsUiEffect
 }
 
 class SettingsViewModel(
@@ -57,11 +56,7 @@ class SettingsViewModel(
     private val clearAllScanDataUseCase: ClearAllScanDataUseCase
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(
-        SettingsUiState(
-            versionLabel = buildVersionLabel()
-        )
-    )
+    private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
     private val _uiEffects = Channel<SettingsUiEffect>(Channel.BUFFERED)
@@ -169,6 +164,12 @@ class SettingsViewModel(
         }
     }
 
+    fun onPrivacyPolicyClick() {
+        viewModelScope.launch {
+            _uiEffects.send(SettingsUiEffect.OpenPrivacyPolicy)
+        }
+    }
+
     private fun update(transform: (AppSettings) -> AppSettings) {
         val current = _uiState.value.settings
         val updated = transform(current)
@@ -182,12 +183,4 @@ class SettingsViewModel(
         }
     }
 
-    private fun buildVersionLabel(): String {
-        val flavorSuffix = when (BuildConfig.ENVIRONMENT) {
-            "development" -> " (Dev)"
-            "staging" -> " (Staging)"
-            else -> ""
-        }
-        return "v${BuildConfig.VERSION_NAME}$flavorSuffix"
-    }
 }

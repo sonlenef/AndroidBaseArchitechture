@@ -18,8 +18,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import dev.sonle.pdfscanner.R
 import dev.sonle.pdfscanner.util.ResponsiveUtils
 
 /**
@@ -70,7 +72,7 @@ private fun ErrorContent(
         ) {
             Icon(
                 imageVector = Icons.Default.Warning,
-                contentDescription = "Error",
+                contentDescription = stringResource(R.string.content_desc_error),
                 tint = MaterialTheme.colorScheme.onErrorContainer,
                 modifier = Modifier.size(48.dp)
             )
@@ -90,7 +92,7 @@ private fun ErrorContent(
                     )
                 ) {
                     Text(
-                        text = "Retry",
+                        text = stringResource(R.string.retry),
                         color = MaterialTheme.colorScheme.onError
                     )
                 }

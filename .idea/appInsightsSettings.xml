@@ -9,9 +9,9 @@
               <option name="connection">
                 <ConnectionSetting>
                   <option name="appId" value="dev.sonle.pdfscanner.dev" />
-                  <option name="mobileSdkAppId" value="1:123456789:android:abcdef123456" />
-                  <option name="projectId" value="baseapp-dev" />
-                  <option name="projectNumber" value="123456789" />
+                  <option name="mobileSdkAppId" value="1:1081452583057:android:cb22548d6ec8fd4ea4c730" />
+                  <option name="projectId" value="lzyscan" />
+                  <option name="projectNumber" value="1081452583057" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

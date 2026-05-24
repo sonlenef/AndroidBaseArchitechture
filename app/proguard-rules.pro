@@ -28,9 +28,11 @@
 -keep class com.google.android.gms.ads.** { *; }
 -keep class com.google.ads.** { *; }
 
-# Keep Hilt classes
--keep class dagger.hilt.** { *; }
--keep class javax.inject.** { *; }
+# Keep Koin classes
+-keep class org.koin.** { *; }
+-keepclassmembers class * {
+    @org.koin.core.annotation.* <methods>;
+}
 
 # Keep Room classes
 -keep class androidx.room.** { *; }
@@ -43,21 +45,37 @@
 -keep class okhttp3.** { *; }
 -keep class com.google.gson.** { *; }
 
-# Keep Voyager classes
--keep class cafe.adriel.voyager.** { *; }
-
 # Keep Compose classes
 -keep class androidx.compose.** { *; }
 
 # Keep Timber classes
 -keep class timber.log.** { *; }
 
-# Keep data classes
--keep class dev.sonle.androidbasearchitecture.data.model.** { *; }
--keep class dev.sonle.androidbasearchitecture.domain.model.** { *; }
+# Keep OpenCV classes
+-keep class org.opencv.** { *; }
 
-# Keep ViewModels
--keep class dev.sonle.androidbasearchitecture.presentation.features.**.ViewModel { *; }
+# Keep LiteRT / TFLite classes
+-keep class org.tensorflow.** { *; }
+-keep class com.google.ai.edge.litert.** { *; }
+
+# Keep Kotlinx Serialization
+-keepattributes RuntimeVisibleAnnotations
+-keep class kotlinx.serialization.** { *; }
+-keepclassmembers @kotlinx.serialization.Serializable class * {
+    *** Companion;
+    *** INSTANCE;
+    kotlinx.serialization.KSerializer serializer(...);
+}
+
+# Keep data classes (correct package: dev.sonle.pdfscanner)
+-keep class dev.sonle.pdfscanner.data.model.** { *; }
+-keep class dev.sonle.pdfscanner.domain.model.** { *; }
+
+# Keep ViewModels (correct package: dev.sonle.pdfscanner)
+-keep class dev.sonle.pdfscanner.presentation.features.**.ViewModel { *; }
+
+# Keep navigation route classes (Kotlin Serialization)
+-keep class dev.sonle.pdfscanner.domain.navigation.** { *; }
 
 # Keep serializable classes
 -keepclassmembers class * implements java.io.Serializable {
