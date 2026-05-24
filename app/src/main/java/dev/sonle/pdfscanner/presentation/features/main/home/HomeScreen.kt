@@ -88,10 +88,24 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.DisposableEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.yohannestz.iconsax_compose.iconsax.Iconsax
 import dev.sonle.pdfscanner.R
+import android.app.Activity
+import androidx.activity.compose.LocalActivityResultRegistryOwner
+import dev.sonle.pdfscanner.BuildConfig
+import dev.sonle.pdfscanner.core.review.InAppReviewManager
+import dev.sonle.pdfscanner.core.review.InAppReviewOutcome
+import dev.sonle.pdfscanner.core.review.ReviewPromptDebug
+import dev.sonle.pdfscanner.core.util.findActivity
+import timber.log.Timber
 import dev.sonle.pdfscanner.core.util.PdfExportActions
+import dev.sonle.pdfscanner.domain.repository.ReviewPromptRepository
+import dev.sonle.pdfscanner.presentation.components.ReviewPromptDialog
 import dev.sonle.pdfscanner.domain.model.AppLanguage
 import dev.sonle.pdfscanner.domain.model.RecentScan
 import dev.sonle.pdfscanner.presentation.locale.labelResId
@@ -138,6 +152,38 @@ fun HomeScreen(
         Unit
     }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showReviewPrompt by remember { mutableStateOf(false) }
+    val reviewPromptRepository: ReviewPromptRepository = koinInject()
+    val inAppReviewManager: InAppReviewManager = koinInject()
+    val hostActivity = LocalActivityResultRegistryOwner.current as? Activity
+
+    LaunchedEffect(Unit) {
+        if (BuildConfig.ENABLE_DEBUG_LOGGING && ReviewPromptDebug.forceShowOnHome) {
+            ReviewPromptDebug.forceShowOnHome = false
+            reviewPromptRepository.prepareDebugReviewPromptOnHome()
+            showReviewPrompt = true
+        }
+    }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, reviewPromptRepository) {
+        fun tryShowReviewPrompt() {
+            reviewPromptRepository.refreshReviewPromptPendingFromCounts()
+            if (reviewPromptRepository.consumePendingReviewPromptOnHome()) {
+                showReviewPrompt = true
+            }
+        }
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                tryShowReviewPrompt()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        if (lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+            tryShowReviewPrompt()
+        }
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     LaunchedEffect(viewModel) {
         viewModel.uiEffects.collect { effect ->
@@ -373,6 +419,41 @@ fun HomeScreen(
                 )
             }
         }
+    }
+
+    if (showReviewPrompt) {
+        ReviewPromptDialog(
+            adsEnabled = adUiStateHolder.adsEnabled,
+            onRate = {
+                showReviewPrompt = false
+                reviewPromptRepository.markReviewPromptHandled()
+                val activity = hostActivity ?: context.findActivity()
+                if (activity == null) {
+                    Timber.w("Review prompt: no Activity for in-app review")
+                    scope.launch {
+                        snackbarHostState.showSnackbar(
+                            context.getString(R.string.settings_play_store_unavailable)
+                        )
+                    }
+                } else {
+                    scope.launch {
+                        when (inAppReviewManager.requestReview(activity)) {
+                            InAppReviewOutcome.Unavailable -> {
+                                snackbarHostState.showSnackbar(
+                                    context.getString(R.string.settings_play_store_unavailable)
+                                )
+                            }
+                            InAppReviewOutcome.FlowFinished,
+                            InAppReviewOutcome.StoreFallback -> Unit
+                        }
+                    }
+                }
+            },
+            onLater = {
+                showReviewPrompt = false
+                reviewPromptRepository.markReviewPromptHandled()
+            }
+        )
     }
 
     if (showDeleteDialog) {

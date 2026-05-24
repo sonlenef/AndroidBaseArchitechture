@@ -16,7 +16,10 @@ object AdConfig {
 
     val useTestAdUnits: Boolean = BuildConfig.USE_TEST_AD_UNITS
 
-    fun isAdsEnabled(remoteAdsEnabled: Boolean): Boolean =
+    fun isAdsEnabled(
+        remoteAdsEnabled: Boolean,
+        adsEnabledByBuild: Boolean = this.adsEnabledByBuild,
+    ): Boolean =
         adsEnabledByBuild && remoteAdsEnabled && EnvironmentConfig.firebaseConfig.remoteConfigEnabled
 
     /** Default interstitial cooldown (seconds) — overridden by Remote Config. */

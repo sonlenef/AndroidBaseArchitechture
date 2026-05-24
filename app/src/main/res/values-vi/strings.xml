@@ -1,55 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Máy quét PDF</string>
     <string name="maintenance_title">Đang bảo trì</string>
-    <string name="login_title">Chào mừng trở lại</string>
-    <string name="login_subtitle">Đăng nhập vào tài khoản</string>
-    <string name="email_label">Email</string>
-    <string name="email_hint">Nhập email của bạn</string>
-    <string name="password_label">Mật khẩu</string>
-    <string name="password_hint">Nhập mật khẩu</string>
-    <string name="login_button">Đăng nhập</string>
-    <string name="login_loading">Đang tải…</string>
-    <string name="users_title">Người dùng</string>
-    <string name="user_avatar">Ảnh đại diện</string>
-    <string name="add_to_favorites">Thêm vào yêu thích</string>
-    <string name="remove_from_favorites">Bỏ khỏi yêu thích</string>
-    <string name="profile_title">Hồ sơ</string>
     <string name="back">Quay lại</string>
-    <string name="edit">Chỉnh sửa</string>
-    <string name="save">Lưu</string>
     <string name="cancel">Hủy</string>
-    <string name="user_details">Chi tiết người dùng</string>
-    <string name="name_label">Tên</string>
-    <string name="phone_label">Điện thoại</string>
-    <string name="website_label">Trang web</string>
-    <string name="error_email_required">Email là bắt buộc</string>
-    <string name="error_email_invalid">Định dạng email không hợp lệ</string>
-    <string name="error_password_required">Mật khẩu là bắt buộc</string>
-    <string name="error_password_short">Mật khẩu phải có ít nhất 6 ký tự</string>
-    <string name="error_name_required">Tên là bắt buộc</string>
-    <string name="error_name_invalid">Định dạng tên không hợp lệ</string>
-    <string name="error_phone_required">Số điện thoại là bắt buộc</string>
-    <string name="error_phone_invalid">Định dạng số điện thoại không hợp lệ</string>
-    <string name="error_website_required">Trang web là bắt buộc</string>
-    <string name="error_website_invalid">Định dạng trang web không hợp lệ</string>
-    <string name="error_network">Lỗi mạng</string>
-    <string name="error_unknown">Đã xảy ra lỗi không xác định</string>
-    <string name="error_validation">Lỗi xác thực</string>
-    <string name="error_authentication">Xác thực thất bại</string>
-    <string name="error_permission">Quyền bị từ chối</string>
     <string name="retry">Thử lại</string>
     <string name="content_desc_error">Lỗi</string>
-    <string name="success_login">Đăng nhập thành công</string>
-    <string name="success_logout">Đăng xuất thành công</string>
-    <string name="success_save">Đã lưu dữ liệu thành công</string>
-    <string name="success_delete">Đã xóa dữ liệu thành công</string>
-    <string name="success_update">Đã cập nhật dữ liệu thành công</string>
-    <string name="demo_credentials">Thông tin đăng nhập demo</string>
-    <string name="demo_credentials_info">Email: định dạng hợp lệ bất kỳ
-Mật khẩu: ít nhất 6 ký tự</string>
     <string name="loading">Đang tải…</string>
-    <string name="saving">Đang lưu…</string>
     <string name="scanner_action_scan">QUÉT</string>
     <string name="scanner_processing">Đang xử lý tài liệu…</string>
     <string name="scanner_processing_page_background">Đang thêm trang…</string>
@@ -57,7 +13,7 @@ Mật khẩu: ít nhất 6 ký tự</string>
     <string name="scanner_save_success_title">Đã lưu PDF</string>
     <string name="scanner_save_success_subtitle">%1$s · %2$s</string>
     <string name="scanner_save_success_hint">Chia sẻ qua email hoặc ứng dụng khác, hoặc lưu vào Thư mục Tải xuống.</string>
-    <string name="scanner_action_share">Chia sẻ</string>
+    <string name="scanner_action_share">Xuất file</string>
     <string name="scanner_action_email">Email</string>
     <string name="scanner_action_save_downloads">Lưu vào thiết bị</string>
     <string name="scanner_share_chooser_title">Chia sẻ PDF qua</string>
@@ -117,7 +73,21 @@ Mật khẩu: ít nhất 6 ký tự</string>
     <string name="scanner_document">Tài liệu</string>
     <string name="viewer_error_prefix">Lỗi: %1$s</string>
     <string name="viewer_file_not_found">Tệp không tồn tại</string>
+    <string name="viewer_open_failed">Không thể mở PDF này. Vui lòng thử lại.</string>
+    <string name="viewer_page_render_failed">Không thể hiển thị trang này.</string>
     <string name="viewer_page_content_desc">Trang %1$d</string>
+    <string name="viewer_page_indicator">Trang %1$d / %2$d</string>
+    <string name="viewer_page_loading">Đang tải trang %1$d…</string>
+    <string name="viewer_share">Chia sẻ</string>
+    <string name="viewer_more_actions">Thêm thao tác</string>
+    <string name="viewer_open_with">Mở bằng</string>
+    <string name="viewer_save_to_downloads">Lưu vào Tải xuống</string>
+    <string name="viewer_share_chooser_title">Chia sẻ PDF qua</string>
+    <string name="viewer_open_with_chooser_title">Mở PDF bằng</string>
+    <string name="viewer_share_failed">Không thể chia sẻ PDF. Vui lòng thử lại.</string>
+    <string name="viewer_open_with_failed">Không tìm thấy ứng dụng để mở PDF này.</string>
+    <string name="viewer_saved_to_downloads">Đã lưu vào thư mục Tải xuống</string>
+    <string name="viewer_save_downloads_failed">Không thể lưu vào Tải xuống. Vui lòng thử lại.</string>
     <string name="main_tab_home">Trang chủ</string>
     <string name="main_tab_settings">Cài đặt</string>
     <string name="main_scan_button">Quét</string>
@@ -222,13 +192,17 @@ Mật khẩu: ít nhất 6 ký tự</string>
     <string name="settings_environment_production">Sản xuất</string>
     <string name="settings_environment_development">Phát triển</string>
     <string name="settings_environment_staging">Staging</string>
-    <string name="settings_about_title">Máy quét PDF</string>
     <string name="settings_about_message">Quét tài liệu chuyên nghiệp với nhận diện viền, bộ lọc và xuất PDF.
 
 Phiên bản: %1$s
 Môi trường: %2$s</string>
     <string name="settings_about_close">Đóng</string>
     <string name="settings_play_store_unavailable">Google Play không khả dụng trên thiết bị này.</string>
+    <string name="review_prompt_title">Bạn thích %1$s chứ?</string>
+    <string name="review_prompt_message_no_ads">App có chạy mượt không? Đánh giá nhanh giúp chúng mình có động lực giữ LzyScan nhanh và 100% không quảng cáo!</string>
+    <string name="review_prompt_message_with_ads">LzyScan có tiết kiệm thời gian cho bạn không? Đánh giá nhanh trên Google Play giúp chúng mình cải thiện app. Cảm ơn bạn đã ủng hộ!</string>
+    <string name="review_prompt_rate">Đánh giá ngay</string>
+    <string name="review_prompt_later">Để sau nhé</string>
     <plurals name="main_search_results_count">
         <item quantity="one">%d kết quả</item>
         <item quantity="other">%d kết quả</item>

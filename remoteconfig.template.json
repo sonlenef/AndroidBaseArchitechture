@@ -39,10 +39,10 @@
       "defaultValue": { "value": "true" }
     },
     "enable_ads": {
-      "defaultValue": { "value": "true" }
+      "defaultValue": { "value": "false" }
     },
     "enable_banner_ads": {
-      "defaultValue": { "value": "true" }
+      "defaultValue": { "value": "false" }
     },
     "enable_interstitial_ads": {
       "defaultValue": { "value": "false" }

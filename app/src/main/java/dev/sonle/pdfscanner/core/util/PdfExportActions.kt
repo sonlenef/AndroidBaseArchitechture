@@ -75,6 +75,16 @@ object PdfExportActions {
         return launchChooser(context, sendIntent, chooserTitle)
     }
 
+    fun openWithPdf(context: Context, exported: ExportedPdf, chooserTitle: String): Result<Unit> {
+        val uri = resolveFileUri(context, exported.absolutePath).getOrElse { return Result.failure(it) }
+        val viewIntent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, MIME_PDF)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        return launchChooser(context, viewIntent, chooserTitle)
+    }
+
     fun sharePdfViaEmail(context: Context, exported: ExportedPdf, chooserTitle: String): Result<Unit> {
         val uri = resolveFileUri(context, exported.absolutePath).getOrElse { return Result.failure(it) }
         val emailIntent = Intent(Intent.ACTION_SEND).apply {

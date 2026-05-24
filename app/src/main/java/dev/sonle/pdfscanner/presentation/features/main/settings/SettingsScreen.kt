@@ -96,9 +96,7 @@ fun SettingsScreen(
                     }
                 }
                 SettingsUiEffect.OpenPrivacyPolicy -> {
-                    val privacyUri = Uri.parse(
-                        "https://sonlenef.github.io/AndroidBaseArchitechture/privacy_policy.html"
-                    )
+                    val privacyUri = Uri.parse(context.getString(R.string.settings_privacy_policy_url))
                     runCatching {
                         context.startActivity(Intent(Intent.ACTION_VIEW, privacyUri))
                     }.onFailure {
@@ -316,7 +314,7 @@ fun SettingsScreen(
                     contentDescription = null
                 )
             },
-            title = { Text(stringResource(R.string.settings_about_title)) },
+            title = { Text(stringResource(R.string.app_name)) },
             text = {
                 Text(
                     stringResource(

@@ -8,6 +8,7 @@ import dev.sonle.pdfscanner.core.fcm.NotificationHelper
 import dev.sonle.pdfscanner.core.locale.AppLocaleApplicator
 import dev.sonle.pdfscanner.core.locale.AppLocaleController
 import dev.sonle.pdfscanner.core.performance.PerformanceMonitor
+import dev.sonle.pdfscanner.core.review.InAppReviewManager
 import dev.sonle.pdfscanner.domain.usecase.SavePdfUseCase
 import dev.sonle.pdfscanner.domain.usecase.ObserveRecentScansUseCase
 import dev.sonle.pdfscanner.domain.usecase.DeleteRecentScanUseCase
@@ -22,7 +23,12 @@ import dev.sonle.pdfscanner.presentation.features.main.settings.SettingsViewMode
 import dev.sonle.pdfscanner.presentation.features.main.home.HomeViewModel
 import dev.sonle.pdfscanner.presentation.features.scanner.ScannerSaveCoordinator
 import dev.sonle.pdfscanner.presentation.features.scanner.ScannerViewModel
+import dev.sonle.pdfscanner.presentation.features.viewer.PdfViewerViewModel
+import kotlinx.coroutines.CoroutineDispatcher
+import org.koin.android.ext.koin.androidContext
+import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.androidx.viewmodel.dsl.viewModelOf
+import org.koin.core.qualifier.named
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
@@ -40,6 +46,7 @@ val appModule = module {
     singleOf(::NotificationHelper)
     singleOf(::AppLocaleController)
     singleOf(::AppLocaleApplicator)
+    single { InAppReviewManager(androidContext()) }
 
     // Use Cases
     factoryOf(::SavePdfUseCase)
@@ -60,4 +67,11 @@ val appModule = module {
     viewModelOf(::HomeViewModel)
     viewModelOf(::SettingsViewModel)
     viewModelOf(::ScannerViewModel)
+    viewModel { (filePath: String) ->
+        PdfViewerViewModel(
+            filePath = filePath,
+            pdfViewerRepository = get(),
+            ioDispatcher = get(named("IoDispatcher"))
+        )
+    }
 }

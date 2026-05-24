@@ -33,13 +33,29 @@ android {
         buildConfigField("String", "ADMOB_INTERSTITIAL_UNIT_ID", "\"ca-app-pub-3940256099942544/1033173712\"")
     }
 
+    signingConfigs {
+        create("release") {
+            val keyAliasVar = project.findProperty("KEY_ALIAS") as String?
+            val keyPasswordVar = project.findProperty("KEY_PASSWORD") as String?
+            val storeFileVar = project.findProperty("STORE_FILE") as String?
+            val storePasswordVar = project.findProperty("STORE_PASSWORD") as String?
+
+            if (storeFileVar != null) {
+                keyAlias = keyAliasVar
+                keyPassword = keyPasswordVar
+                storeFile = file(storeFileVar)
+                storePassword = storePasswordVar
+            }
+        }
+    }
+
     flavorDimensions += "environment"
     productFlavors {
         create("dev") {
             dimension = "environment"
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
-            resValue("string", "app_name", "PDF Scanner Dev")
+            resValue("string", "app_name", "LzyScan Dev")
             buildConfigField("String", "API_BASE_URL", "\"https://jsonplaceholder.typicode.com/\"")
             buildConfigField("String", "ENVIRONMENT", "\"development\"")
             buildConfigField("int", "API_TIMEOUT_SECONDS", "30")
@@ -51,13 +67,14 @@ android {
             buildConfigField("boolean", "ENABLE_PERFORMANCE_MONITORING", "false")
             buildConfigField("boolean", "ENABLE_ADS", "false")
             buildConfigField("boolean", "USE_TEST_AD_UNITS", "true")
+            buildConfigField("String", "PLAY_STORE_APPLICATION_ID", "\"dev.sonle.pdfscanner\"")
         }
         
         create("staging") {
             dimension = "environment"
             applicationIdSuffix = ".staging"
             versionNameSuffix = "-staging"
-            resValue("string", "app_name", "PDF Scanner Staging")
+            resValue("string", "app_name", "LzyScan Staging")
             buildConfigField("String", "API_BASE_URL", "\"https://staging-api.example.com/\"")
             buildConfigField("String", "ENVIRONMENT", "\"staging\"")
             buildConfigField("int", "API_TIMEOUT_SECONDS", "15")
@@ -69,11 +86,12 @@ android {
             buildConfigField("boolean", "ENABLE_PERFORMANCE_MONITORING", "true")
             buildConfigField("boolean", "ENABLE_ADS", "false")
             buildConfigField("boolean", "USE_TEST_AD_UNITS", "true")
+            buildConfigField("String", "PLAY_STORE_APPLICATION_ID", "\"dev.sonle.pdfscanner\"")
         }
         
         create("prod") {
             dimension = "environment"
-            resValue("string", "app_name", "PDF Scanner")
+            resValue("string", "app_name", "LzyScan")
             buildConfigField("String", "API_BASE_URL", "\"https://api.example.com/\"")
             buildConfigField("String", "ENVIRONMENT", "\"production\"")
             buildConfigField("int", "API_TIMEOUT_SECONDS", "10")
@@ -87,6 +105,7 @@ android {
             buildConfigField("boolean", "USE_TEST_AD_UNITS", "false")
             buildConfigField("String", "ADMOB_BANNER_UNIT_ID", "\"ca-app-pub-9782307752944150/8228619625\"")
             buildConfigField("String", "ADMOB_INTERSTITIAL_UNIT_ID", "\"ca-app-pub-9782307752944150/5842506738\"")
+            buildConfigField("String", "PLAY_STORE_APPLICATION_ID", "\"dev.sonle.pdfscanner\"")
         }
     }
 
@@ -96,6 +115,7 @@ android {
             isMinifyEnabled = false
         }
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -159,6 +179,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.foundation)
     implementation(libs.iconsax.compose)
 
     // Navigation
@@ -193,6 +214,10 @@ dependencies {
     // Google Ads (AdMob) + consent (UMP)
     implementation(libs.play.services.ads)
     implementation(libs.user.messaging.platform)
+
+    // Google Play In-App Review
+    implementation(libs.play.review)
+    implementation(libs.play.review.ktx)
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)

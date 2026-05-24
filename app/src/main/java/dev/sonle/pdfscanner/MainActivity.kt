@@ -1,8 +1,10 @@
 package dev.sonle.pdfscanner
 
 import android.os.Bundle
+import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,6 +18,7 @@ import androidx.lifecycle.lifecycleScope
 import dev.sonle.pdfscanner.core.ads.AdMobInitializer
 import dev.sonle.pdfscanner.core.ads.InterstitialAdController
 import dev.sonle.pdfscanner.core.config.EnvironmentConfig
+import dev.sonle.pdfscanner.core.review.ReviewPromptDebug
 import dev.sonle.pdfscanner.presentation.PdfScannerApp
 import dev.sonle.pdfscanner.presentation.ads.AdUiStateHolder
 import dev.sonle.pdfscanner.presentation.theme.AndroidBaseArchitechtureTheme
@@ -28,6 +31,10 @@ import timber.log.Timber
  */
 class MainActivity : AppCompatActivity() {
 
+    companion object {
+        const val EXTRA_DEBUG_SHOW_REVIEW = "debug_show_review"
+    }
+
     private val adMobInitializer: AdMobInitializer by inject()
     private val adUiStateHolder: AdUiStateHolder by inject()
     private val interstitialAdController: InterstitialAdController by inject()
@@ -35,6 +42,9 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        ReviewPromptDebug.forceShowOnHome =
+            intent.getBooleanExtra(EXTRA_DEBUG_SHOW_REVIEW, false)
 
         Timber.d("MainActivity created in ${EnvironmentConfig.environment} environment")
 
@@ -52,7 +62,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         setContent {
-            PdfScannerApp()
+            CompositionLocalProvider(
+                LocalActivityResultRegistryOwner provides this@MainActivity
+            ) {
+                PdfScannerApp()
+            }
         }
     }
 }

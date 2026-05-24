@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 BASE_XML = ROOT / "app/src/main/res/values/strings.xml"
 
 SKIP_NAMES = {
+    "app_name",
     "language_option_english",
     "language_option_spanish",
     "language_option_portuguese",
@@ -29,69 +30,18 @@ def tr(name: str, es: str, pt: str, hi: str, vi: str) -> None:
 
 
 # --- App & maintenance ---
-tr("app_name", "Escáner PDF", "Scanner PDF", "PDF स्कैनर", "Máy quét PDF")
 tr("maintenance_title", "En mantenimiento", "Em manutenção", "रखरखाव जारी", "Đang bảo trì")
 
-# --- Common ---
+# --- Shared UI ---
 tr("back", "Atrás", "Voltar", "वापस", "Quay lại")
-tr("edit", "Editar", "Editar", "संपादित करें", "Chỉnh sửa")
-tr("save", "Guardar", "Salvar", "सहेजें", "Lưu")
 tr("cancel", "Cancelar", "Cancelar", "रद्द करें", "Hủy")
 tr("retry", "Reintentar", "Tentar novamente", "पुनः प्रयास करें", "Thử lại")
 tr("content_desc_error", "Error", "Erro", "त्रुटि", "Lỗi")
 tr("loading", "Cargando…", "Carregando…", "लोड हो रहा है…", "Đang tải…")
-tr("saving", "Guardando…", "Salvando…", "सहेजा जा रहा है…", "Đang lưu…")
 
 # --- Language UI ---
 tr("language_action", "Idioma", "Idioma", "भाषा", "Ngôn ngữ")
 tr("language_menu_title", "Elegir idioma", "Escolher idioma", "भाषा चुनें", "Chọn ngôn ngữ")
-
-# --- Login / profile (legacy resources, kept for completeness) ---
-tr("login_title", "Bienvenido de nuevo", "Bem-vindo de volta", "फिर से स्वागत है", "Chào mừng trở lại")
-tr("login_subtitle", "Inicia sesión en tu cuenta", "Entre na sua conta", "अपने खाते में साइन इन करें", "Đăng nhập vào tài khoản")
-tr("email_label", "Correo electrónico", "E-mail", "ईमेल", "Email")
-tr("email_hint", "Introduce tu correo", "Digite seu e-mail", "अपना ईमेल दर्ज करें", "Nhập email của bạn")
-tr("password_label", "Contraseña", "Senha", "पासवर्ड", "Mật khẩu")
-tr("password_hint", "Introduce tu contraseña", "Digite sua senha", "अपना पासवर्ड दर्ज करें", "Nhập mật khẩu")
-tr("login_button", "Iniciar sesión", "Entrar", "साइन इन", "Đăng nhập")
-tr("login_loading", "Cargando…", "Carregando…", "लोड हो रहा है…", "Đang tải…")
-tr("users_title", "Usuarios", "Usuários", "उपयोगकर्ता", "Người dùng")
-tr("user_avatar", "Avatar de usuario", "Avatar do usuário", "उपयोगकर्ता अवतार", "Ảnh đại diện")
-tr("add_to_favorites", "Añadir a favoritos", "Adicionar aos favoritos", "पसंदीदा में जोड़ें", "Thêm vào yêu thích")
-tr("remove_from_favorites", "Quitar de favoritos", "Remover dos favoritos", "पसंदीदा से हटाएँ", "Bỏ khỏi yêu thích")
-tr("profile_title", "Perfil", "Perfil", "प्रोफ़ाइल", "Hồ sơ")
-tr("user_details", "Detalles del usuario", "Detalhes do usuário", "उपयोगकर्ता विवरण", "Chi tiết người dùng")
-tr("name_label", "Nombre", "Nome", "नाम", "Tên")
-tr("phone_label", "Teléfono", "Telefone", "फ़ोन", "Điện thoại")
-tr("website_label", "Sitio web", "Site", "वेबसाइट", "Trang web")
-
-# --- Validation & errors ---
-tr("error_email_required", "El correo es obligatorio", "O e-mail é obrigatório", "ईमेल आवश्यक है", "Email là bắt buộc")
-tr("error_email_invalid", "Formato de correo no válido", "Formato de e-mail inválido", "अमान्य ईमेल प्रारूप", "Định dạng email không hợp lệ")
-tr("error_password_required", "La contraseña es obligatoria", "A senha é obrigatória", "पासवर्ड आवश्यक है", "Mật khẩu là bắt buộc")
-tr("error_password_short", "La contraseña debe tener al menos 6 caracteres", "A senha deve ter pelo menos 6 caracteres", "पासवर्ड कम से कम 6 अक्षरों का होना चाहिए", "Mật khẩu phải có ít nhất 6 ký tự")
-tr("error_name_required", "El nombre es obligatorio", "O nome é obrigatório", "नाम आवश्यक है", "Tên là bắt buộc")
-tr("error_name_invalid", "Formato de nombre no válido", "Formato de nome inválido", "अमान्य नाम प्रारूप", "Định dạng tên không hợp lệ")
-tr("error_phone_required", "El teléfono es obligatorio", "O telefone é obrigatório", "फ़ोन आवश्यक है", "Số điện thoại là bắt buộc")
-tr("error_phone_invalid", "Formato de teléfono no válido", "Formato de telefone inválido", "अमान्य फ़ोन प्रारूप", "Định dạng số điện thoại không hợp lệ")
-tr("error_website_required", "El sitio web es obligatorio", "O site é obrigatório", "वेबसाइट आवश्यक है", "Trang web là bắt buộc")
-tr("error_website_invalid", "Formato de sitio web no válido", "Formato de site inválido", "अमान्य वेबसाइट प्रारूप", "Định dạng trang web không hợp lệ")
-tr("error_network", "Error de red", "Erro de rede", "नेटवर्क त्रुटि", "Lỗi mạng")
-tr("error_unknown", "Se produjo un error desconocido", "Ocorreu um erro desconhecido", "अज्ञात त्रुटि हुई", "Đã xảy ra lỗi không xác định")
-tr("error_validation", "Error de validación", "Erro de validação", "सत्यापन त्रुटि", "Lỗi xác thực")
-tr("error_authentication", "Error de autenticación", "Falha na autenticação", "प्रमाणीकरण विफल", "Xác thực thất bại")
-tr("error_permission", "Permiso denegado", "Permissão negada", "अनुमति अस्वीकृत", "Quyền bị từ chối")
-
-# --- Success ---
-tr("success_login", "Inicio de sesión correcto", "Login realizado com sucesso", "लॉगिन सफल", "Đăng nhập thành công")
-tr("success_logout", "Sesión cerrada", "Logout realizado", "लॉगआउट सफल", "Đăng xuất thành công")
-tr("success_save", "Datos guardados correctamente", "Dados salvos com sucesso", "डेटा सफलतापूर्वक सहेजा गया", "Đã lưu dữ liệu thành công")
-tr("success_delete", "Datos eliminados correctamente", "Dados excluídos com sucesso", "डेटा सफलतापूर्वक हटाया गया", "Đã xóa dữ liệu thành công")
-tr("success_update", "Datos actualizados correctamente", "Dados atualizados com sucesso", "डेटा सफलतापूर्वक अपडेट किया गया", "Đã cập nhật dữ liệu thành công")
-
-# --- Demo ---
-tr("demo_credentials", "Credenciales de demostración", "Credenciais de demonstração", "डेमो क्रेडेंशियल", "Thông tin đăng nhập demo")
-tr("demo_credentials_info", "Correo: cualquier formato válido\nContraseña: al menos 6 caracteres", "E-mail: qualquer formato válido\nSenha: pelo menos 6 caracteres", "ईमेल: कोई भी मान्य प्रारूप\nपासवर्ड: कम से कम 6 अक्षर", "Email: định dạng hợp lệ bất kỳ\nMật khẩu: ít nhất 6 ký tự")
 
 # --- Scanner ---
 tr("scanner_action_scan", "ESCANEAR", "DIGITALIZAR", "स्कैन", "QUÉT")
@@ -101,7 +51,7 @@ tr("scanner_saved_file_label", "Guardado en:", "Salvo em:", "यहाँ सह
 tr("scanner_save_success_title", "PDF guardado", "PDF salvo", "PDF सहेजा गया", "Đã lưu PDF")
 tr("scanner_save_success_subtitle", "%1$s · %2$s", "%1$s · %2$s", "%1$s · %2$s", "%1$s · %2$s")
 tr("scanner_save_success_hint", "Comparte por correo u otras aplicaciones, o guárdalo en Descargas.", "Compartilhe por e-mail ou outros apps, ou salve em Downloads.", "ईमेल या अन्य ऐप से साझा करें, या डाउनलोड में सहेजें।", "Chia sẻ qua email hoặc ứng dụng khác, hoặc lưu vào Thư mục Tải xuống.")
-tr("scanner_action_share", "Compartir", "Compartilhar", "साझा करें", "Chia sẻ")
+tr("scanner_action_share", "Exportar", "Exportar", "निर्यात", "Xuất file")
 tr("scanner_action_email", "Correo", "E-mail", "ईमेल", "Email")
 tr("scanner_action_save_downloads", "Guardar en el dispositivo", "Salvar no dispositivo", "डिवाइस में सहेजें", "Lưu vào thiết bị")
 tr("scanner_share_chooser_title", "Compartir PDF mediante", "Compartilhar PDF via", "PDF साझा करें", "Chia sẻ PDF qua")
@@ -270,10 +220,28 @@ tr("settings_version_suffix_staging", " (Staging)", " (Staging)", " (Staging)", 
 tr("settings_environment_production", "Producción", "Produção", "उत्पादन", "Sản xuất")
 tr("settings_environment_development", "Desarrollo", "Desenvolvimento", "विकास", "Phát triển")
 tr("settings_environment_staging", "Preproducción", "Homologação", "स्टेजिंग", "Staging")
-tr("settings_about_title", "Escáner PDF", "Scanner PDF", "PDF स्कैनर", "Máy quét PDF")
 tr("settings_about_message", "Escaneo profesional de documentos con detección de bordes, filtros y exportación a PDF.\n\nVersión: %1$s\nEntorno: %2$s", "Digitalização profissional com detecção de bordas, filtros e exportação em PDF.\n\nVersão: %1$s\nAmbiente: %2$s", "किनारा पहचान, फ़िल्टर और PDF निर्यात के साथ पेशेवर दस्तावेज़ स्कैनिंग।\n\nसंस्करण: %1$s\nवातावरण: %2$s", "Quét tài liệu chuyên nghiệp với nhận diện viền, bộ lọc và xuất PDF.\n\nPhiên bản: %1$s\nMôi trường: %2$s")
 tr("settings_about_close", "Cerrar", "Fechar", "बंद करें", "Đóng")
 tr("settings_play_store_unavailable", "Google Play no está disponible en este dispositivo.", "O Google Play não está disponível neste dispositivo.", "इस डिवाइस पर Google Play उपलब्ध नहीं है।", "Google Play không khả dụng trên thiết bị này.")
+
+# --- In-app review ---
+tr("review_prompt_title", "¿Te gusta %1$s?", "Gostando do %1$s?", "%1$s पसंद आ रहा है?", "Bạn thích %1$s chứ?")
+tr(
+    "review_prompt_message_no_ads",
+    "¿La app te funciona bien? Una valoración rápida nos motiva a mantener LzyScan rápido y 100% sin anuncios.",
+    "O app está funcionando bem para você? Uma avaliação rápida nos motiva a manter o LzyScan rápido e 100% sem anúncios!",
+    "क्या ऐप आपके लिए सहज चल रहा है? एक त्वरित रेटिंग हमें LzyScan को तेज़ और 100% विज्ञापन-मुक्त रखने की प्रेरणा देती है!",
+    "App có chạy mượt không? Đánh giá nhanh giúp chúng mình có động lực giữ LzyScan nhanh và 100% không quảng cáo!",
+)
+tr(
+    "review_prompt_message_with_ads",
+    "¿LzyScan te ahorra tiempo? Una valoración rápida en Google Play nos ayuda a seguir mejorando la app. ¡Gracias por tu apoyo!",
+    "O LzyScan está economizando seu tempo? Uma avaliação rápida no Google Play nos ajuda a continuar melhorando o app. Obrigado pelo seu apoio!",
+    "क्या LzyScan आपका समय बचा रहा है? Google Play पर एक त्वरित रेटिंग ऐप को बेहतर बनाने में मदद करती है। आपके समर्थन के लिए धन्यवाद!",
+    "LzyScan có tiết kiệm thời gian cho bạn không? Đánh giá nhanh trên Google Play giúp chúng mình cải thiện app. Cảm ơn bạn đã ủng hộ!",
+)
+tr("review_prompt_rate", "Valorar ahora", "Avaliar agora", "अभी रेट करें", "Đánh giá ngay")
+tr("review_prompt_later", "Quizá más tarde", "Talvez depois", "बाद में", "Để sau nhé")
 
 PLURALS: dict[str, dict[str, dict[str, str]]] = {
     "main_search_results_count": {

@@ -18,8 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Check
+import com.github.yohannestz.iconsax_compose.iconsax.Iconsax
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -51,6 +50,7 @@ import androidx.core.content.ContextCompat
 import dev.sonle.pdfscanner.R
 import dev.sonle.pdfscanner.core.ads.InterstitialAdController
 import dev.sonle.pdfscanner.core.util.PdfExportActions
+import dev.sonle.pdfscanner.domain.repository.ReviewPromptRepository
 import dev.sonle.pdfscanner.presentation.ads.AdUiStateHolder
 import dev.sonle.pdfscanner.presentation.features.scanner.components.CameraView
 import dev.sonle.pdfscanner.presentation.features.scanner.components.CropEditorView
@@ -73,6 +73,7 @@ fun ScannerScreen(
     val scope = rememberCoroutineScope()
     val adUiStateHolder: AdUiStateHolder = koinInject()
     val interstitialAdController: InterstitialAdController = koinInject()
+    val reviewPromptRepository: ReviewPromptRepository = koinInject()
 
     LaunchedEffect(viewModel) {
         viewModel.uiEffects.collect { effect ->
@@ -209,6 +210,7 @@ fun ScannerScreen(
                             )
                         }
                     }
+                    reviewPromptRepository.onUserSharedExport()
                 },
                 onShareEmail = {
                     PdfExportActions.sharePdfViaEmail(
@@ -292,7 +294,7 @@ private fun PermissionRequiredView() {
                 .padding(32.dp)
         ) {
             Icon(
-                Icons.Rounded.Check, // You'd ideally use a camera icon here, but Check is what's available without adding imports
+                imageVector = Iconsax.Bold.Camera,
                 contentDescription = null,
                 tint = Color.White,
                 modifier = Modifier.size(48.dp)

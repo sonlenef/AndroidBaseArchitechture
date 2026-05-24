@@ -19,7 +19,7 @@ class AdUiStateHolderTest {
     fun setup() {
         remoteConfigManager = mockk(relaxed = true)
         featureFlags = FeatureFlags(remoteConfigManager)
-        holder = AdUiStateHolder(featureFlags)
+        holder = AdUiStateHolder(featureFlags, adsEnabledByBuild = true)
     }
 
     @Test

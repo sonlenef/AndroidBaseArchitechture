@@ -19,6 +19,7 @@ import dev.sonle.pdfscanner.presentation.features.scanner.model.MultiCaptureOver
 import dev.sonle.pdfscanner.presentation.features.scanner.model.PageMode
 import dev.sonle.pdfscanner.presentation.features.scanner.model.ScannedPage
 import dev.sonle.pdfscanner.presentation.features.scanner.model.ScannerMode
+import dev.sonle.pdfscanner.domain.repository.ReviewPromptRepository
 import dev.sonle.pdfscanner.domain.usecase.ObserveAppSettingsUseCase
 import dev.sonle.pdfscanner.presentation.features.main.settings.ScannerSettingsMapper.toDefaultImageFilter
 import dev.sonle.pdfscanner.presentation.features.main.settings.ScannerSettingsMapper.toPageMode
@@ -89,6 +90,7 @@ data class DetectionUiState(
 
 class ScannerViewModel(
     private val saveCoordinator: ScannerSaveCoordinator,
+    private val reviewPromptRepository: ReviewPromptRepository,
     observeAppSettingsUseCase: ObserveAppSettingsUseCase
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<ScannerUiState>(
@@ -633,10 +635,12 @@ class ScannerViewModel(
             val fileName = "Scan_${System.currentTimeMillis()}.pdf"
             when (val outcome = saveCoordinator.save(scannedPages.toList(), fileName)) {
                 is ScannerSaveCoordinator.SaveOutcome.Success -> {
+                    reviewPromptRepository.recordSuccessfulScan()
                     _uiState.value = ScannerUiState.SaveSuccess(outcome.exported)
                     _uiEffects.send(ScannerUiEffect.SaveCompleted(outcome.exported))
                 }
                 is ScannerSaveCoordinator.SaveOutcome.MetadataFailed -> {
+                    reviewPromptRepository.recordSuccessfulScan()
                     _uiState.value = ScannerUiState.SaveSuccess(outcome.exported)
                     _uiEffects.send(ScannerUiEffect.ShowMessage(R.string.scanner_recent_metadata_failed))
                     _uiEffects.send(ScannerUiEffect.SaveCompleted(outcome.exported))

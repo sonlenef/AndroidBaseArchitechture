@@ -6,6 +6,7 @@ import dev.sonle.pdfscanner.core.util.OpenCVScanner
 import dev.sonle.pdfscanner.presentation.features.scanner.model.CaptureAnimationPhase
 import dev.sonle.pdfscanner.presentation.features.scanner.model.MultiCaptureOverlayState
 import dev.sonle.pdfscanner.domain.model.AppSettings
+import dev.sonle.pdfscanner.domain.repository.ReviewPromptRepository
 import dev.sonle.pdfscanner.domain.usecase.ObserveAppSettingsUseCase
 import dev.sonle.pdfscanner.presentation.features.scanner.model.PageMode
 import io.mockk.every
@@ -30,6 +31,7 @@ class ScannerViewModelTest {
     private lateinit var viewModel: ScannerViewModel
     private lateinit var saveCoordinator: ScannerSaveCoordinator
     private lateinit var observeAppSettingsUseCase: ObserveAppSettingsUseCase
+    private lateinit var reviewPromptRepository: ReviewPromptRepository
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
@@ -37,8 +39,13 @@ class ScannerViewModelTest {
         Dispatchers.setMain(testDispatcher)
         saveCoordinator = mockk(relaxed = true)
         observeAppSettingsUseCase = mockk()
+        reviewPromptRepository = mockk(relaxed = true)
         every { observeAppSettingsUseCase() } returns flowOf(AppSettings.Default)
-        viewModel = ScannerViewModel(saveCoordinator, observeAppSettingsUseCase)
+        viewModel = ScannerViewModel(
+            saveCoordinator,
+            reviewPromptRepository,
+            observeAppSettingsUseCase
+        )
         mockkObject(OpenCVScanner)
     }
 

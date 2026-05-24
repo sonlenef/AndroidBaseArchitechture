@@ -11,7 +11,8 @@ import dev.sonle.pdfscanner.core.config.FeatureFlags
  * [adsEnabled] is refreshed after Remote Config fetch — do not cache only at construction.
  */
 class AdUiStateHolder(
-    private val featureFlags: FeatureFlags
+    private val featureFlags: FeatureFlags,
+    private val adsEnabledByBuild: Boolean = AdConfig.adsEnabledByBuild,
 ) {
     val bannerUnitId: String = AdConfig.bannerUnitId
     val interstitialUnitId: String = AdConfig.interstitialUnitId
@@ -32,5 +33,8 @@ class AdUiStateHolder(
     }
 
     private fun computeAdsEnabled(): Boolean =
-        AdConfig.isAdsEnabled(featureFlags.isBannerAdsEnabled())
+        AdConfig.isAdsEnabled(
+            remoteAdsEnabled = featureFlags.isBannerAdsEnabled(),
+            adsEnabledByBuild = adsEnabledByBuild,
+        )
 }

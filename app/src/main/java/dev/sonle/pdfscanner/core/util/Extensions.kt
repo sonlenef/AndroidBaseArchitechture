@@ -1,7 +1,10 @@
 package dev.sonle.pdfscanner.core.util
 
+import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.SharedPreferences
+import androidx.activity.ComponentActivity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
@@ -29,6 +32,21 @@ fun String.trimAndValidate(): String = this.trim().takeIf { it.isNotBlank() } ?:
  */
 fun Context.getSharedPreferences(): SharedPreferences {
     return getSharedPreferences(Constants.PREFERENCES_NAME, Context.MODE_PRIVATE)
+}
+
+/** Resolves the hosting [Activity] through [ContextWrapper] chains (e.g. localized context). */
+tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
+}
+
+/** @see findActivity */
+tailrec fun Context.findComponentActivity(): ComponentActivity? = when (this) {
+    is ComponentActivity -> this
+    is Activity -> this as? ComponentActivity
+    is ContextWrapper -> baseContext.findComponentActivity()
+    else -> null
 }
 
 /**

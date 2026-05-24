@@ -24,6 +24,17 @@ class PdfExportActionsTest {
     }
 
     @Test
+    fun `openWithPdf should fail when pdf does not exist`() {
+        val exported = ExportedPdf(
+            fileName = "missing.pdf",
+            absolutePath = "/tmp/missing_open_with.pdf",
+            fileSizeBytes = 0
+        )
+        val result = PdfExportActions.openWithPdf(context, exported, "Open")
+        assertTrue(result.isFailure)
+    }
+
+    @Test
     fun `saveToDownloads should copy pdf into public downloads`() {
         val sourceDir = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)!!
         val source = File(sourceDir, "save_downloads_test.pdf")

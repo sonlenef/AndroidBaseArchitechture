@@ -1,55 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Escáner PDF</string>
     <string name="maintenance_title">En mantenimiento</string>
-    <string name="login_title">Bienvenido de nuevo</string>
-    <string name="login_subtitle">Inicia sesión en tu cuenta</string>
-    <string name="email_label">Correo electrónico</string>
-    <string name="email_hint">Introduce tu correo</string>
-    <string name="password_label">Contraseña</string>
-    <string name="password_hint">Introduce tu contraseña</string>
-    <string name="login_button">Iniciar sesión</string>
-    <string name="login_loading">Cargando…</string>
-    <string name="users_title">Usuarios</string>
-    <string name="user_avatar">Avatar de usuario</string>
-    <string name="add_to_favorites">Añadir a favoritos</string>
-    <string name="remove_from_favorites">Quitar de favoritos</string>
-    <string name="profile_title">Perfil</string>
     <string name="back">Atrás</string>
-    <string name="edit">Editar</string>
-    <string name="save">Guardar</string>
     <string name="cancel">Cancelar</string>
-    <string name="user_details">Detalles del usuario</string>
-    <string name="name_label">Nombre</string>
-    <string name="phone_label">Teléfono</string>
-    <string name="website_label">Sitio web</string>
-    <string name="error_email_required">El correo es obligatorio</string>
-    <string name="error_email_invalid">Formato de correo no válido</string>
-    <string name="error_password_required">La contraseña es obligatoria</string>
-    <string name="error_password_short">La contraseña debe tener al menos 6 caracteres</string>
-    <string name="error_name_required">El nombre es obligatorio</string>
-    <string name="error_name_invalid">Formato de nombre no válido</string>
-    <string name="error_phone_required">El teléfono es obligatorio</string>
-    <string name="error_phone_invalid">Formato de teléfono no válido</string>
-    <string name="error_website_required">El sitio web es obligatorio</string>
-    <string name="error_website_invalid">Formato de sitio web no válido</string>
-    <string name="error_network">Error de red</string>
-    <string name="error_unknown">Se produjo un error desconocido</string>
-    <string name="error_validation">Error de validación</string>
-    <string name="error_authentication">Error de autenticación</string>
-    <string name="error_permission">Permiso denegado</string>
     <string name="retry">Reintentar</string>
     <string name="content_desc_error">Error</string>
-    <string name="success_login">Inicio de sesión correcto</string>
-    <string name="success_logout">Sesión cerrada</string>
-    <string name="success_save">Datos guardados correctamente</string>
-    <string name="success_delete">Datos eliminados correctamente</string>
-    <string name="success_update">Datos actualizados correctamente</string>
-    <string name="demo_credentials">Credenciales de demostración</string>
-    <string name="demo_credentials_info">Correo: cualquier formato válido
-Contraseña: al menos 6 caracteres</string>
     <string name="loading">Cargando…</string>
-    <string name="saving">Guardando…</string>
     <string name="scanner_action_scan">ESCANEAR</string>
     <string name="scanner_processing">Procesando documento…</string>
     <string name="scanner_processing_page_background">Añadiendo página…</string>
@@ -57,7 +13,7 @@ Contraseña: al menos 6 caracteres</string>
     <string name="scanner_save_success_title">PDF guardado</string>
     <string name="scanner_save_success_subtitle">%1$s · %2$s</string>
     <string name="scanner_save_success_hint">Comparte por correo u otras aplicaciones, o guárdalo en Descargas.</string>
-    <string name="scanner_action_share">Compartir</string>
+    <string name="scanner_action_share">Exportar</string>
     <string name="scanner_action_email">Correo</string>
     <string name="scanner_action_save_downloads">Guardar en el dispositivo</string>
     <string name="scanner_share_chooser_title">Compartir PDF mediante</string>
@@ -117,7 +73,21 @@ Contraseña: al menos 6 caracteres</string>
     <string name="scanner_document">Documento</string>
     <string name="viewer_error_prefix">Error: %1$s</string>
     <string name="viewer_file_not_found">El archivo no existe</string>
+    <string name="viewer_open_failed">No se pudo abrir este PDF. Inténtalo de nuevo.</string>
+    <string name="viewer_page_render_failed">No se pudo mostrar esta página.</string>
     <string name="viewer_page_content_desc">Página %1$d</string>
+    <string name="viewer_page_indicator">Página %1$d de %2$d</string>
+    <string name="viewer_page_loading">Cargando página %1$d…</string>
+    <string name="viewer_share">Compartir</string>
+    <string name="viewer_more_actions">Más acciones</string>
+    <string name="viewer_open_with">Abrir con</string>
+    <string name="viewer_save_to_downloads">Guardar en Descargas</string>
+    <string name="viewer_share_chooser_title">Compartir PDF mediante</string>
+    <string name="viewer_open_with_chooser_title">Abrir PDF con</string>
+    <string name="viewer_share_failed">No se pudo compartir el PDF. Inténtalo de nuevo.</string>
+    <string name="viewer_open_with_failed">No se encontró ninguna app para abrir este PDF.</string>
+    <string name="viewer_saved_to_downloads">Guardado en la carpeta Descargas</string>
+    <string name="viewer_save_downloads_failed">No se pudo guardar en Descargas. Inténtalo de nuevo.</string>
     <string name="main_tab_home">Inicio</string>
     <string name="main_tab_settings">Ajustes</string>
     <string name="main_scan_button">Escanear</string>
@@ -222,13 +192,17 @@ Contraseña: al menos 6 caracteres</string>
     <string name="settings_environment_production">Producción</string>
     <string name="settings_environment_development">Desarrollo</string>
     <string name="settings_environment_staging">Preproducción</string>
-    <string name="settings_about_title">Escáner PDF</string>
     <string name="settings_about_message">Escaneo profesional de documentos con detección de bordes, filtros y exportación a PDF.
 
 Versión: %1$s
 Entorno: %2$s</string>
     <string name="settings_about_close">Cerrar</string>
     <string name="settings_play_store_unavailable">Google Play no está disponible en este dispositivo.</string>
+    <string name="review_prompt_title">¿Te gusta %1$s?</string>
+    <string name="review_prompt_message_no_ads">¿La app te funciona bien? Una valoración rápida nos motiva a mantener LzyScan rápido y 100% sin anuncios.</string>
+    <string name="review_prompt_message_with_ads">¿LzyScan te ahorra tiempo? Una valoración rápida en Google Play nos ayuda a seguir mejorando la app. ¡Gracias por tu apoyo!</string>
+    <string name="review_prompt_rate">Valorar ahora</string>
+    <string name="review_prompt_later">Quizá más tarde</string>
     <plurals name="main_search_results_count">
         <item quantity="one">%d resultado</item>
         <item quantity="other">%d resultados</item>
